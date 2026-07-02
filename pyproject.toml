@@ -1,0 +1,19 @@
+[project]
+name = "notion-workspace-app"
+version = "0.1.0"
+description = "Aplicação local para operar o Notion: API Django, SPA React, servidor MCP e launcher TUI (start_app.py)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Felipe Alcantara" }]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["server/**/migrations/*.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

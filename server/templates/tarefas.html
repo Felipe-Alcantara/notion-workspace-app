@@ -1,0 +1,128 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tarefas — Automações do Notion</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+  <header class="header">
+    <h1>Tarefas</h1>
+    <p class="subtitle">Automações do Notion</p>
+  </header>
+
+  <main class="container">
+    <!-- Barra de filtro + ação -->
+    <section class="toolbar">
+      <div class="filter-group">
+        <label for="filtro-status">Filtrar por status:</label>
+        <select id="filtro-status">
+          <option value="">Todos</option>
+        </select>
+        <button
+          type="button"
+          id="btn-recarregar"
+          class="btn btn-secondary btn-icon"
+          title="Recarregar tarefas"
+          aria-label="Recarregar tarefas"
+        >&#x21bb;</button>
+      </div>
+      <button type="button" id="btn-abrir-form" class="btn btn-primary">+ Nova tarefa</button>
+    </section>
+
+    <div
+      id="mensagem-operacao"
+      class="mensagem-operacao"
+      role="status"
+      aria-live="polite"
+      hidden
+    ></div>
+
+    <!-- Formulário de criação (oculto por padrão) -->
+    <section id="form-criar" class="card form-criar" aria-labelledby="titulo-form-criar" hidden>
+      <h2 id="titulo-form-criar">Nova tarefa</h2>
+      <form id="form-tarefa">
+        <div class="campo">
+          <label for="input-nome">Tarefa <span class="obrigatorio">*</span></label>
+          <input type="text" id="input-nome" required placeholder="Ex.: Estudar a API do Notion">
+        </div>
+        <div class="campo-row">
+          <div class="campo">
+            <label for="input-status">Etapa</label>
+            <input type="text" id="input-status" placeholder="Ex.: Entrada">
+          </div>
+          <div class="campo">
+            <label for="input-prazo">Prazo</label>
+            <input type="date" id="input-prazo">
+          </div>
+        </div>
+        <div class="form-acoes">
+          <button type="submit" class="btn btn-primary">Criar</button>
+          <button type="button" id="btn-cancelar" class="btn btn-secondary">Cancelar</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Estado: carregando -->
+    <div id="estado-carregando" class="estado" role="status" aria-live="polite" hidden>
+      <div class="spinner" aria-hidden="true"></div>
+      <p>Carregando tarefas...</p>
+    </div>
+
+    <!-- Estado: erro -->
+    <div id="estado-erro" class="estado estado-erro" role="alert" hidden>
+      <p class="erro-icone" aria-hidden="true">!</p>
+      <p id="erro-mensagem">Erro ao carregar tarefas.</p>
+      <button type="button" id="btn-tentar-novamente" class="btn btn-secondary">
+        Tentar novamente
+      </button>
+    </div>
+
+    <!-- Estado: vazio -->
+    <div id="estado-vazio" class="estado" hidden>
+      <p class="vazio-icone">&#x1f4cb;</p>
+      <p>Nenhuma tarefa encontrada.</p>
+    </div>
+
+    <!-- Lista de tarefas -->
+    <ul id="lista-tarefas" class="lista-tarefas"></ul>
+  </main>
+
+  <!-- Modal de mover etapa -->
+  <div
+    id="modal-status"
+    class="modal-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="titulo-modal-status"
+    aria-describedby="modal-tarefa-nome"
+    hidden
+  >
+    <form id="form-status" class="modal card">
+      <h2 id="titulo-modal-status">Mover ou concluir tarefa</h2>
+      <p id="modal-tarefa-nome"></p>
+      <div class="campo">
+        <label for="modal-novo-status">Nova etapa</label>
+        <input
+          type="text"
+          id="modal-novo-status"
+          required
+          placeholder="Ex.: Concluída"
+        >
+      </div>
+      <div class="form-acoes">
+        <button type="submit" id="btn-confirmar-status" class="btn btn-primary">
+          Confirmar
+        </button>
+        <button type="button" id="btn-fechar-modal" class="btn btn-secondary">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script src="{% static 'js/app.js' %}"></script>
+</body>
+</html>

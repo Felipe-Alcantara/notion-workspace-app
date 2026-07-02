@@ -1,0 +1,16 @@
+# Núcleo
+notion-starter @ git+https://github.com/Felipe-Alcantara/notion-starter.git
+django>=5.0
+requests>=2.25
+
+# Launcher TUI (start_app.py)
+questionary>=2.0
+rich>=13.0
+
+# Servidor MCP
+mcp>=1.28,<2
+
+# Desenvolvimento
+pytest>=7.0
+responses>=0.23
+ruff>=0.4
