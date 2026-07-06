@@ -55,6 +55,25 @@ def test_escrever_conteudo_anexa_e_conta_blocos():
     assert len(corpo["children"]) == 2
 
 
+@responses.activate
+def test_escrever_conteudo_fatia_em_lotes_de_100():
+    def _eco(request):
+        filhos = json.loads(request.body)["children"]
+        return (200, {}, json.dumps({"results": filhos}))
+
+    responses.add_callback(
+        responses.PATCH,
+        f"{NOTION_BASE_URL}/blocks/page1/children",
+        callback=_eco,
+        content_type="application/json",
+    )
+    markdown = "\n\n".join(f"linha {i}" for i in range(250))
+    total = svc.escrever_conteudo("page1", markdown, cliente=_cliente())
+    assert total == 250
+    tamanhos = [len(json.loads(c.request.body)["children"]) for c in responses.calls]
+    assert tamanhos == [100, 100, 50]
+
+
 def test_escrever_conteudo_vazio_levanta():
     with pytest.raises(ValueError):
         svc.escrever_conteudo("page1", "   ", cliente=_cliente())
