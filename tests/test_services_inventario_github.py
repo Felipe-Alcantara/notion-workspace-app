@@ -7,8 +7,10 @@ from integrations.github import RepoInfo
 from services.inventario_github import (
     CamposGitHub,
     ResumoInventario,
+    _coletar_repos,
     _hash_readme,
     _propriedades_pagina,
+    _repo_mudou_desde_pagina,
     atualizar_repos,
     construir_schema,
     exportar_repos,
@@ -88,12 +90,14 @@ class _NotionFixo:
         blocos: dict[str, list] | None = None,
         tem_coluna_hash: bool = True,
         sem_data_source: bool = False,
+        datas: dict[str, str] | None = None,
     ) -> None:
-        # existentes: {url -> page_id}. hashes/blocos: por page_id.
+        # existentes: {url -> page_id}. hashes/blocos/datas: por page_id.
         self.existentes = existentes or {}
         self.falhar_criacao = falhar_criacao
         self.hashes = hashes or {}
         self.blocos = blocos or {}
+        self.datas = datas or {}
         self.tem_coluna_hash = tem_coluna_hash
         self.sem_data_source = sem_data_source
         self.colunas_criadas: list[dict] = []
@@ -114,6 +118,11 @@ class _NotionFixo:
         if not page_id:
             return []
         props = {"README hash": _rt(self.hashes.get(page_id, ""))}
+        if page_id in self.datas:
+            props["Atualizado em"] = {
+                "type": "date",
+                "date": {"start": self.datas[page_id]},
+            }
         return [{"id": page_id, "properties": props}]
 
     def criar_pagina(self, database_id, propriedades):
@@ -467,3 +476,79 @@ def test_atualizar_sem_readme_nao_mexe_no_schema():
         ["felipe"], DB, github_client=github, notion_client=notion, sincronizar_readme=False
     )
     assert notion.colunas_criadas == []
+
+
+# --------------------------------------------------------------------------- #
+# Repositórios arquivados
+# --------------------------------------------------------------------------- #
+
+
+def test_coletar_ignora_arquivados_quando_pedido():
+    github = _GitHubFixo(
+        {"felipe": [_repo("ativo"), _repo("velho", arquivado=True)]}
+    )
+    resumo = ResumoInventario()
+    nomes = [r.nome for r in _coletar_repos(["felipe"], github, resumo, ignorar_arquivados=True)]
+    assert nomes == ["ativo"]
+    assert resumo.repos_encontrados == 1
+
+
+def test_atualizar_ignora_arquivados():
+    notion = _NotionFixo()
+    github = _GitHubFixo({"felipe": [_repo("velho", arquivado=True)]})
+    resumo = atualizar_repos(
+        ["felipe"], DB, github_client=github, notion_client=notion, ignorar_arquivados=True
+    )
+    assert resumo.repos_encontrados == 0
+    assert notion.criados == []
+
+
+# --------------------------------------------------------------------------- #
+# Sync incremental (apenas mudanças)
+# --------------------------------------------------------------------------- #
+
+
+def test_repo_mudou_desde_pagina_compara_datas():
+    campos = CamposGitHub()
+    repo_novo = _repo("r1", atualizado_em="2026-07-07T15:00:00Z")
+    data_prop = {"type": "date", "date": {"start": "2026-07-06T10:00:00.000+00:00"}}
+    pagina = {"properties": {"Atualizado em": data_prop}}
+    assert _repo_mudou_desde_pagina(repo_novo, pagina, campos) is True
+
+    # Mesmo instante em formatos diferentes (Z vs +00:00) não conta como mudança.
+    repo_igual = _repo("r1", atualizado_em="2026-07-06T10:00:00Z")
+    assert _repo_mudou_desde_pagina(repo_igual, pagina, campos) is False
+
+    # Sem data gravada: na dúvida, atualiza.
+    sem_data = {"properties": {}}
+    assert _repo_mudou_desde_pagina(repo_igual, sem_data, campos) is True
+
+
+def test_atualizar_apenas_mudancas_pula_sem_alteracao():
+    repo = _repo("r1", atualizado_em="2026-06-25T00:00:00Z")
+    notion = _NotionFixo(
+        existentes={repo.url_html: "pagina-1"},
+        datas={"pagina-1": "2026-06-25T00:00:00.000+00:00"},
+    )
+    github = _GitHubFixo({"felipe": [repo]}, readmes={"felipe/r1": "# X"})
+    resumo = atualizar_repos(
+        ["felipe"], DB, github_client=github, notion_client=notion, apenas_mudancas=True
+    )
+    assert resumo.paginas_puladas == 1
+    assert resumo.paginas_atualizadas == 0
+    assert notion.atualizados == []  # não reescreveu
+    assert github.detalhados == []  # nem buscou README
+
+
+def test_atualizar_apenas_mudancas_atualiza_quando_avancou():
+    repo = _repo("r1", atualizado_em="2026-07-07T12:00:00Z")
+    notion = _NotionFixo(
+        existentes={repo.url_html: "pagina-1"},
+        datas={"pagina-1": "2026-06-25T00:00:00.000+00:00"},
+    )
+    github = _GitHubFixo({"felipe": [repo]}, readmes={"felipe/r1": "# X"})
+    resumo = atualizar_repos(
+        ["felipe"], DB, github_client=github, notion_client=notion, apenas_mudancas=True
+    )
+    assert resumo.paginas_puladas == 0
+    assert resumo.paginas_atualizadas == 1

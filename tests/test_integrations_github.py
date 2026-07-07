@@ -12,6 +12,7 @@ from integrations.github import (
     GitHubConnectionError,
     RepoInfo,
     _repo_de_resposta,
+    extrair_login,
 )
 
 
@@ -335,6 +336,29 @@ def test_retry_esgotado_em_500():
             method="GET",
             path="/repos/u/r",
         )
+
+
+@pytest.mark.parametrize(
+    "entrada, esperado",
+    [
+        ("Felipe-Alcantara", "Felipe-Alcantara"),
+        ("  Felipe-Alcantara  ", "Felipe-Alcantara"),
+        ("@Felipe-Alcantara", "Felipe-Alcantara"),
+        ("https://github.com/Felipe-Alcantara", "Felipe-Alcantara"),
+        ("https://github.com/Felipe-Alcantara/", "Felipe-Alcantara"),
+        ("github.com/Felipe-Alcantara", "Felipe-Alcantara"),
+        ("https://github.com/Felipe-Alcantara?tab=repositories", "Felipe-Alcantara"),
+        ("", ""),
+    ],
+)
+def test_extrair_login(entrada, esperado):
+    assert extrair_login(entrada) == esperado
+
+
+def test_validar_usuario_aceita_url_de_perfil():
+    assert GitHubClient._validar_usuario("https://github.com/Felipe-Alcantara") == (
+        "Felipe-Alcantara"
+    )
 
 
 @pytest.mark.parametrize("usuario", ["", "../admin", "nome com espaço", "a" * 40])
