@@ -18,4 +18,5 @@ urlpatterns = [
     path("database-atual", views.database_atual, name="database-atual"),
     path("databases", views.databases, name="databases"),
     path("databases/<str:database_id>", views.database_detalhe, name="database-detalhe"),
+    path("github/atualizar", views.atualizar_github, name="github-atualizar"),
 ]

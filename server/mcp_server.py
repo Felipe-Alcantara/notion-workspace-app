@@ -145,6 +145,20 @@ def _projeto_dict(projeto: Any) -> dict[str, Any]:
     return {"id": projeto.id, "url": projeto.url}
 
 
+def _resumo_inventario_dict(resumo: Any) -> dict[str, Any]:
+    """Serializa o resumo do inventário GitHub para MCP/REST."""
+
+    return {
+        "repos_encontrados": resumo.repos_encontrados,
+        "paginas_criadas": resumo.paginas_criadas,
+        "paginas_atualizadas": resumo.paginas_atualizadas,
+        "paginas_puladas": resumo.paginas_puladas,
+        "readmes_escritos": resumo.readmes_escritos,
+        "readmes_atualizados": resumo.readmes_atualizados,
+        "erros": resumo.erros,
+    }
+
+
 def _texto_obrigatorio(valor: str, campo: str) -> str:
     """Normaliza uma entrada textual obrigatoria da borda MCP."""
 
@@ -362,6 +376,50 @@ def update_project_page(
             notion_client=_criar_notion_client(),
         )
         return _projeto_dict(projeto)
+
+    return _executar(_atualizar)
+
+
+@mcp.tool(name="notion.update_github_inventory", annotations=_UPDATE)
+def update_github_inventory(
+    contas: list[str],
+    database_id: str | None = None,
+    sem_readme: bool = False,
+    sem_arquivados: bool = False,
+    apenas_mudancas: bool = False,
+) -> dict[str, Any]:
+    """Re-sincroniza o database GITHUB com propriedades e README.
+
+    Ferramenta de escrita idempotente — requer confirmacao do usuario.
+
+    Args:
+        contas: Contas GitHub, handles ou URLs de perfil.
+        database_id: Database de destino. Se omitido, usa NOTION_DATABASE_ID.
+        sem_readme: Quando verdadeiro, atualiza so propriedades.
+        sem_arquivados: Quando verdadeiro, ignora repositorios arquivados.
+        apenas_mudancas: Quando verdadeiro, pula paginas existentes sem mudanca.
+    """
+
+    from integrations.github import GitHubClient
+    from services import inventario_github as svc
+
+    def _atualizar() -> dict[str, Any]:
+        contas_limpas = [conta.strip() for conta in contas if conta and conta.strip()]
+        if not contas_limpas:
+            raise ValueError("'contas' e obrigatorio")
+        db_id = _texto_opcional(database_id) or os.environ.get("NOTION_DATABASE_ID", "").strip()
+        if not db_id:
+            raise ValueError("'database_id' e obrigatorio")
+        resumo = svc.atualizar_repos(
+            contas_limpas,
+            db_id,
+            github_client=GitHubClient(),
+            notion_client=_criar_notion_client(),
+            sincronizar_readme=not sem_readme,
+            ignorar_arquivados=sem_arquivados,
+            apenas_mudancas=apenas_mudancas,
+        )
+        return _resumo_inventario_dict(resumo)
 
     return _executar(_atualizar)
 

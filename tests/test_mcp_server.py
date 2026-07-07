@@ -37,6 +37,7 @@ from mcp_server import (
     move_status,
     read_page_content,
     search,
+    update_github_inventory,
     update_project_page,
 )
 
@@ -150,6 +151,7 @@ class TestAnotacoesMCP:
             "notion.move_status",
             "notion.conclude_task",
             "notion.update_project_page",
+            "notion.update_github_inventory",
             "notion.search",
             "notion.read_page_content",
             "notion.append_content",
@@ -437,6 +439,34 @@ class TestUpdateProjectPage:
             "id": "projeto-1",
             "url": "https://notion.so/projeto-1",
         }
+
+
+class TestUpdateGithubInventory:
+    """Testes da ferramenta de atualização do inventário GitHub."""
+
+    def test_repassa_flags_para_o_servico(self):
+        from services.inventario_github import ResumoInventario
+
+        resumo = ResumoInventario(repos_encontrados=2, paginas_puladas=1)
+        with (
+            mock.patch("mcp_server._criar_notion_client", return_value=object()),
+            mock.patch("services.inventario_github.atualizar_repos", return_value=resumo) as atualizar,
+        ):
+            resultado = update_github_inventory(
+                contas=[" https://github.com/felipe "],
+                database_id="db-github",
+                sem_readme=True,
+                sem_arquivados=True,
+                apenas_mudancas=True,
+            )
+
+        assert resultado["repos_encontrados"] == 2
+        assert resultado["paginas_puladas"] == 1
+        _, kwargs = atualizar.call_args
+        assert atualizar.call_args.args[:2] == (["https://github.com/felipe"], "db-github")
+        assert kwargs["sincronizar_readme"] is False
+        assert kwargs["ignorar_arquivados"] is True
+        assert kwargs["apenas_mudancas"] is True
 
 
 # ---------------------------------------------------------------------------

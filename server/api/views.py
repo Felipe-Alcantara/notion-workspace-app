@@ -16,6 +16,7 @@ Saída em JSON. Erros mapeados: 400 (entrada inválida), 404 (tarefa inexistente
 from __future__ import annotations
 
 import json
+import os
 from collections.abc import Callable
 from typing import Any
 
@@ -23,6 +24,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from integrations.github import GitHubClient
 from services import tarefas as svc
 
 from notion_starter import NotionAPIError, NotionConfigurationError, NotionHTTPError
@@ -59,6 +61,41 @@ def _lista_de_strings(valor: Any, campo: str) -> list[str] | None:
     if not isinstance(valor, list) or not all(isinstance(item, str) for item in valor):
         raise ValueError(f"'{campo}' deve ser uma lista de strings")
     return valor
+
+
+def _lista_csv_ou_lista(valor: Any, campo: str) -> list[str] | None:
+    """Aceita lista de strings ou CSV em uma string."""
+
+    if valor is None:
+        return None
+    if isinstance(valor, str):
+        itens = [item.strip() for item in valor.split(",") if item.strip()]
+        return itens or None
+    return _lista_de_strings(valor, campo)
+
+
+def _bool_opcional(dados: dict[str, Any], campo: str, *, default: bool = False) -> bool:
+    """Valida booleanos opcionais do JSON público."""
+
+    if campo not in dados or dados[campo] is None:
+        return default
+    if not isinstance(dados[campo], bool):
+        raise ValueError(f"'{campo}' deve ser booleano")
+    return dados[campo]
+
+
+def _resumo_inventario_dict(resumo: Any) -> dict[str, Any]:
+    """Serializa o resumo de inventário GitHub para a API pública."""
+
+    return {
+        "repos_encontrados": resumo.repos_encontrados,
+        "paginas_criadas": resumo.paginas_criadas,
+        "paginas_atualizadas": resumo.paginas_atualizadas,
+        "paginas_puladas": resumo.paginas_puladas,
+        "readmes_escritos": resumo.readmes_escritos,
+        "readmes_atualizados": resumo.readmes_atualizados,
+        "erros": resumo.erros,
+    }
 
 
 def _lista_query(request: HttpRequest, campo: str) -> list[str] | None:
@@ -211,3 +248,39 @@ def database_detalhe(request: HttpRequest, database_id: str) -> JsonResponse:
         return JsonResponse(exploracao.descrever_database(database_id.strip()))
 
     return _responder(_descrever)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def atualizar_github(request: HttpRequest) -> JsonResponse:
+    """Re-sincroniza o inventário GitHub com as mesmas flags do CLI."""
+
+    from integrations.notion import criar_cliente
+    from services import inventario_github
+
+    def _atualizar() -> JsonResponse:
+        dados = _corpo_json(request)
+        contas = _lista_csv_ou_lista(dados.get("contas"), "contas")
+        if not contas:
+            contas = _lista_csv_ou_lista(os.environ.get("GITHUB_CONTAS", ""), "contas")
+        if not contas:
+            raise ValueError("'contas' é obrigatório")
+
+        database_id = _texto_opcional(dados, "database") or os.environ.get(
+            "NOTION_DATABASE_ID", ""
+        ).strip()
+        if not database_id:
+            raise ValueError("'database' é obrigatório")
+
+        resumo = inventario_github.atualizar_repos(
+            contas,
+            database_id,
+            github_client=GitHubClient(),
+            notion_client=criar_cliente(),
+            sincronizar_readme=not _bool_opcional(dados, "sem_readme"),
+            ignorar_arquivados=_bool_opcional(dados, "sem_arquivados"),
+            apenas_mudancas=_bool_opcional(dados, "apenas_mudancas"),
+        )
+        return JsonResponse(_resumo_inventario_dict(resumo))
+
+    return _responder(_atualizar)

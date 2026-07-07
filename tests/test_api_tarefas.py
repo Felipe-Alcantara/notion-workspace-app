@@ -411,3 +411,39 @@ def test_get_opcoes_lista_status_duracao_areas(client):
         "duracao": ["Minutos", "Dias"],
         "areas": [{"id": "a1", "nome": "Estudos"}],
     }
+
+
+def test_post_atualizar_github_repassa_flags(client, monkeypatch):
+    from services.inventario_github import ResumoInventario
+
+    chamadas = {}
+
+    def atualizar_repos(*args, **kwargs):
+        chamadas["args"] = args
+        chamadas["kwargs"] = kwargs
+        return ResumoInventario(repos_encontrados=1, paginas_puladas=1)
+
+    monkeypatch.setattr("integrations.notion.criar_cliente", lambda: object())
+    monkeypatch.setattr("services.inventario_github.atualizar_repos", atualizar_repos)
+
+    resp = client.post(
+        "/api/github/atualizar",
+        data=json.dumps(
+            {
+                "contas": "felipe, https://github.com/outra",
+                "database": "db-github",
+                "sem_readme": True,
+                "sem_arquivados": True,
+                "apenas_mudancas": True,
+            }
+        ),
+        content_type="application/json",
+    )
+
+    assert resp.status_code == 200
+    assert resp.json()["repos_encontrados"] == 1
+    assert resp.json()["paginas_puladas"] == 1
+    assert chamadas["args"][:2] == (["felipe", "https://github.com/outra"], "db-github")
+    assert chamadas["kwargs"]["sincronizar_readme"] is False
+    assert chamadas["kwargs"]["ignorar_arquivados"] is True
+    assert chamadas["kwargs"]["apenas_mudancas"] is True
