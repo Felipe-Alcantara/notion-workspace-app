@@ -10,8 +10,8 @@ Aplicação local completa para operar o Notion: **API Django + SPA React + serv
 | --- | --- | --- |
 | Launcher | `start_app.py` | TUI que instala dependências, sobe servidor e front com um comando |
 | API | `server/api` | REST em Django para tarefas, exploração e opções |
-| Services | `server/services` | Regras de negócio: tarefas, clonagem, ingestão, IA, sincronização GitHub |
-| Integrações | `server/integrations` | Notion, GitHub e OpenRouter |
+| Services | `server/services` | Shims para `notion_starter.services`: tarefas, clonagem, ingestão, IA, sincronização GitHub |
+| Integrações | `server/integrations` | Notion local + shims para GitHub e OpenRouter |
 | MCP | `server/mcp_server.py` | Servidor MCP expondo as operações para clientes de IA |
 | Front | `front/` | SPA React (Vite) com kanban, filtros e exploração do workspace |
 
