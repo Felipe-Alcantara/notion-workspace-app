@@ -10,10 +10,9 @@ from __future__ import annotations
 import json
 
 import responses
-from services import tarefas as svc
-
 from notion_starter import NotionClient, TaskList
 from notion_starter.constants import NOTION_BASE_URL
+from services import tarefas as svc
 
 TOKEN = "ntn_test_token"
 DB = "db_tarefas"

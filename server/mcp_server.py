@@ -41,7 +41,6 @@ if str(_SERVER_DIR) not in sys.path:
 from core.config import carregar_env_file  # noqa: E402
 from mcp.server.fastmcp import FastMCP  # noqa: E402
 from mcp.types import ToolAnnotations  # noqa: E402
-
 from notion_starter import (  # noqa: E402
     NotionAPIError,
     NotionClient,

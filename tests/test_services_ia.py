@@ -18,15 +18,14 @@ import json
 import pytest
 import responses
 from integrations.openrouter import ProvedorIA
+from notion_starter import NotionClient, TaskList
+from notion_starter.constants import NOTION_BASE_URL
 from services.ia import (
     AcaoSugerida,
     InterpretacaoErro,
     executar_acao,
     interpretar_comando,
 )
-
-from notion_starter import NotionClient, TaskList
-from notion_starter.constants import NOTION_BASE_URL
 
 TOKEN = "ntn_test_token"
 DB = "db_tarefas"

@@ -15,7 +15,6 @@ import pytest
 pytest.importorskip("django")
 
 import responses  # noqa: E402
-
 from notion_starter.constants import NOTION_BASE_URL  # noqa: E402
 
 DB = "db_tarefas"

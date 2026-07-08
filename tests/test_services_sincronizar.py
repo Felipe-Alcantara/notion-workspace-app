@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 from integrations.github import RepoInfo
+from notion_starter import Tarefa
 from services.sincronizar_github import (
     CamposProjeto,
     ResumoSync,
@@ -11,8 +12,6 @@ from services.sincronizar_github import (
     _propriedades_tarefa,
     sincronizar,
 )
-
-from notion_starter import Tarefa
 
 DB_PROJ = "db_projetos"
 

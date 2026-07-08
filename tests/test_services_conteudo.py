@@ -12,10 +12,9 @@ import json
 
 import pytest
 import responses
-from services import conteudo as svc
-
 from notion_starter import NotionClient
 from notion_starter.constants import NOTION_BASE_URL
+from services import conteudo as svc
 
 TOKEN = "ntn_test_token"
 

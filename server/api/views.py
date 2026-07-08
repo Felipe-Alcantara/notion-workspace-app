@@ -25,9 +25,8 @@ from django.http import HttpRequest, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from integrations.github import GitHubClient
-from services import tarefas as svc
-
 from notion_starter import NotionAPIError, NotionConfigurationError, NotionHTTPError
+from services import tarefas as svc
 
 from .serializers import tarefa_para_dict
 

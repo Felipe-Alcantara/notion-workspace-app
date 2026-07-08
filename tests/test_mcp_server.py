@@ -40,7 +40,6 @@ from mcp_server import (
     update_github_inventory,
     update_project_page,
 )
-
 from notion_starter import NotionClient, NotionConfigurationError, TaskList
 from notion_starter.constants import NOTION_BASE_URL
 
@@ -450,7 +449,9 @@ class TestUpdateGithubInventory:
         resumo = ResumoInventario(repos_encontrados=2, paginas_puladas=1)
         with (
             mock.patch("mcp_server._criar_notion_client", return_value=object()),
-            mock.patch("services.inventario_github.atualizar_repos", return_value=resumo) as atualizar,
+            mock.patch(
+                "services.inventario_github.atualizar_repos", return_value=resumo
+            ) as atualizar,
         ):
             resultado = update_github_inventory(
                 contas=[" https://github.com/felipe "],

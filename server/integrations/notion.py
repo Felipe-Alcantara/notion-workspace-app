@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from core.config import carregar_config
 from django.core.exceptions import ImproperlyConfigured
-
 from notion_starter import CamposTarefa, NotionClient, TaskList
 
 
