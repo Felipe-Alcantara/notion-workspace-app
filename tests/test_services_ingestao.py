@@ -7,6 +7,8 @@ from pathlib import Path
 import pytest
 import responses
 from integrations.github import RepoInfo
+from notion_starter import NotionClient
+from notion_starter.constants import NOTION_BASE_URL
 from services.ingestao import (
     Fonte,
     FonteArquivos,
@@ -15,9 +17,6 @@ from services.ingestao import (
     _propriedades_de_item,
     ingerir,
 )
-
-from notion_starter import NotionClient
-from notion_starter.constants import NOTION_BASE_URL
 
 TOKEN = "ntn_test_token"
 DB = "db_ingestao"
@@ -51,7 +50,7 @@ def test_item_coletado_campos_basicos():
 
 
 def test_fonte_arquivos_coleta_recursivamente_com_origem_relativa(tmp_path: Path):
-    (tmp_path / "a.txt").write_text("conteúdo A")
+    (tmp_path / "a.txt").write_text("conteúdo A", encoding="utf-8")
     subdir = tmp_path / "subdir"
     subdir.mkdir()
     (subdir / "b.py").write_text("print('b')")

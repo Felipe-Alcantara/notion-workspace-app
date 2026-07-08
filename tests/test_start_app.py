@@ -35,11 +35,14 @@ def test_reexecuta_no_python_do_projeto_quando_venv_difere(monkeypatch):
 
     start_app._reexecutar_no_python_do_projeto(["--action", "tudo"])
 
+    # A produção normaliza o caminho via Path.absolute(), então o esperado
+    # usa a mesma normalização para valer em POSIX e Windows.
+    destino = str(start_app.Path("/tmp/projeto/.venv/bin/python").absolute())
     assert chamadas == [
         (
-            "/tmp/projeto/.venv/bin/python",
+            destino,
             [
-                "/tmp/projeto/.venv/bin/python",
+                destino,
                 str(start_app.Path(start_app.__file__).resolve()),
                 "--action",
                 "tudo",
@@ -569,8 +572,9 @@ def test_comando_front_usa_host_e_porta_padrao():
 
     comando = start_app._comando_front(runtime)
 
+    # str(Path) usa o separador da plataforma; compara com a mesma conversão.
     assert comando == [
-        "/usr/bin/npm",
+        str(runtime.npm),
         "run",
         "dev",
         "--",
