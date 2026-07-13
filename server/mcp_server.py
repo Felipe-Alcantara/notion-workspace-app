@@ -87,6 +87,13 @@ mcp = FastMCP(
     "notion",
     instructions=(
         "Ferramentas para gerenciar tarefas e conteudo no Notion. "
+        "REGRA DO LINK: ao receber um link/ID do Notion, LEIA e entenda do que "
+        "se trata (notion.read_page_content) ANTES de qualquer escrita; se for "
+        "um database, o trabalho e nas LINHAS (notion.list_database_rows, "
+        "localizar a linha certa e atualiza-la) — nunca ignorar o database e "
+        "escrever blocos soltos abaixo dele. REGRA DE LEITURA: propriedades e "
+        "corpo sao partes da mesma pagina; leia primeiro as propriedades, "
+        "depois o corpo. "
         "Ferramentas de escrita (notion.create_task, notion.move_status, "
         "notion.conclude_task, notion.append_content, notion.edit_block) e "
         "atualizacao de projetos (notion.update_project_page) requerem "
@@ -447,16 +454,22 @@ def search(query: str | None = None) -> list[dict[str, str]]:
 
 @mcp.tool(name="notion.read_page_content", annotations=_READ)
 def read_page_content(page_id: str) -> dict[str, str]:
-    """Le o conteudo (corpo) de uma pagina do Notion como Markdown.
+    """Le uma pagina completa do Notion: propriedades PRIMEIRO, depois o corpo.
 
-    Ferramenta de leitura (read) — nao modifica dados. Complementa
-    notion.list_tasks, que so traz as propriedades; aqui vem o texto da nota.
+    Ferramenta de leitura (read) — nao modifica dados. Propriedades e corpo sao
+    partes da MESMA pagina; comece a leitura pelas ``propriedades`` (ha paginas
+    com mais informacao nas colunas do que no corpo) e so entao leia o
+    ``markdown``. Se o resultado indicar ``tipo: database``, o alvo e um
+    database: trabalhe nas LINHAS (localize a certa e atualize-a) em vez de
+    escrever blocos soltos abaixo dele.
 
     Args:
         page_id: ID da pagina cujo conteudo sera lido.
 
     Returns:
-        Um dict com ``id`` e ``markdown`` (vazio se a pagina nao tiver corpo).
+        Um dict com ``id``, ``tipo``, ``propriedades`` (coluna -> valor
+        preenchido) e ``markdown`` (vazio se a pagina nao tiver corpo); para
+        databases, ``linhas`` no lugar de ``propriedades``.
     """
 
     from services import conteudo as svc

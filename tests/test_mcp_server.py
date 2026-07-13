@@ -564,7 +564,12 @@ class TestConteudo:
         )
         with self._patch_cliente():
             resultado = read_page_content(page_id="page1")
-        assert resultado == {"id": "page1", "tipo": "pagina", "markdown": "oi"}
+        assert resultado == {
+        "id": "page1",
+        "tipo": "pagina",
+        "propriedades": {},
+        "markdown": "oi",
+    }
 
     @responses.activate
     def test_append_content_conta_blocos(self):

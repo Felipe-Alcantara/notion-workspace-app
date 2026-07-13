@@ -194,7 +194,12 @@ def test_ler_pagina_ou_database_pagina_com_corpo():
         status=200,
     )
     resultado = svc.ler_pagina_ou_database("page1", cliente=_cliente())
-    assert resultado == {"id": "page1", "tipo": "pagina", "markdown": "oi"}
+    assert resultado == {
+        "id": "page1",
+        "tipo": "pagina",
+        "propriedades": {},
+        "markdown": "oi",
+    }
 
 
 @responses.activate
@@ -249,4 +254,37 @@ def test_ler_pagina_ou_database_pagina_sem_corpo():
         status=200,
     )
     resultado = svc.ler_pagina_ou_database("page1", cliente=_cliente())
-    assert resultado == {"id": "page1", "tipo": "pagina", "markdown": ""}
+    assert resultado == {
+        "id": "page1",
+        "tipo": "pagina",
+        "propriedades": {},
+        "markdown": "",
+    }
+
+
+@responses.activate
+def test_ler_pagina_ou_database_traz_propriedades_preenchidas_primeiro():
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/pages/page1",
+        json={
+            "id": "page1",
+            "properties": {
+                "Nome": {"type": "title", "title": [{"plain_text": "Linha"}]},
+                "Status": {"type": "status", "status": {"name": "Feito"}},
+                "Prazo": {"type": "date", "date": None},
+            },
+        },
+        status=200,
+    )
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/blocks/page1/children",
+        json={"results": [], "has_more": False},
+        status=200,
+    )
+    resultado = svc.ler_pagina_ou_database("page1", cliente=_cliente())
+    # Propriedades preenchidas entram (vazias ficam de fora), mesmo sem corpo.
+    assert resultado["tipo"] == "pagina"
+    assert resultado["propriedades"] == {"Nome": "Linha", "Status": "Feito"}
+    assert resultado["markdown"] == ""
