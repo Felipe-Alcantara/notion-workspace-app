@@ -73,6 +73,11 @@ servidor MCP com as ferramentas `notion.*` (`server/mcp_server.py`) e o launcher
   Windows-only corrigidos (suíte 100% verde em Windows e POSIX), adicionados
   `CONTRIBUTING.md`, `IA.md` e CI GitHub Actions. Validação: 272 testes verdes,
   ruff limpo, `npm run lint` e `npm run build` verdes.
+- [2026-07-13] ✅ Cinco ferramentas MCP novas, paridade com a CLI:
+  `notion.create_database`, `notion.import_spreadsheet`, `notion.upload_file`,
+  `notion.move_page` e `notion.move_database` — bordas finas sobre o
+  notion-starter. Decisão: paridade só no MCP; a API REST segue servindo apenas
+  o front. Validação: 255 testes verdes (2 skips) e ruff limpo.
 
 ---
 
