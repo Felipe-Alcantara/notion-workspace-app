@@ -27,18 +27,23 @@ from mcp_server import (
     append_content,
     clone_database,
     conclude_task,
+    create_database,
     create_task,
     delete_block,
     edit_block,
+    import_spreadsheet,
     list_database_rows,
     list_tasks,
     main,
     mcp,
+    move_database,
+    move_page,
     move_status,
     read_page_content,
     search,
     update_github_inventory,
     update_project_page,
+    upload_file,
 )
 from notion_starter import NotionClient, NotionConfigurationError, TaskList
 from notion_starter.constants import NOTION_BASE_URL
@@ -158,7 +163,28 @@ class TestAnotacoesMCP:
             "notion.delete_block",
             "notion.list_database_rows",
             "notion.clone_database",
+            "notion.create_database",
+            "notion.import_spreadsheet",
+            "notion.upload_file",
+            "notion.move_page",
+            "notion.move_database",
         }
+
+    def test_novas_ferramentas_de_escrita_nao_sao_destrutivas(self):
+        tools = self._tools()
+        for nome in (
+            "notion.create_database",
+            "notion.import_spreadsheet",
+            "notion.upload_file",
+            "notion.move_page",
+            "notion.move_database",
+        ):
+            ann = tools[nome].annotations
+            assert ann.readOnlyHint is False, nome
+            assert ann.destructiveHint is False, nome
+        # mover e re-parent: repetir preserva o mesmo efeito
+        assert tools["notion.move_page"].annotations.idempotentHint is True
+        assert tools["notion.move_database"].annotations.idempotentHint is True
 
 
 # ---------------------------------------------------------------------------
@@ -735,3 +761,106 @@ class TestDataSources:
         assert resultado["data_source_id"] == "ds_clone"
         assert resultado["titulo"] == "Origem (cópia)"
         assert resultado["linhas_copiadas"] == 0
+
+
+# ---------------------------------------------------------------------------
+# Novas ferramentas: create_database / import_spreadsheet / upload_file / move
+# ---------------------------------------------------------------------------
+
+
+class _ClienteNovasFerramentas:
+    """Double do NotionClient para as ferramentas de construcao/movimentacao."""
+
+    def __init__(self):
+        self.chamadas: list[tuple[str, object]] = []
+
+    def criar_database(self, pagina_id, titulo, propriedades, **kwargs):
+        self.chamadas.append(("criar_database", (pagina_id, titulo, propriedades, kwargs)))
+        return {"id": "db_novo", "url": "https://notion.so/db_novo"}
+
+    def mover_pagina(self, page_id, novo_pai_id, *, tipo_pai="page_id"):
+        self.chamadas.append(("mover_pagina", (page_id, novo_pai_id, tipo_pai)))
+        return {"id": page_id}
+
+    def mover_database(self, database_id, novo_pai_id):
+        self.chamadas.append(("mover_database", (database_id, novo_pai_id)))
+        return {"id": database_id}
+
+    def enviar_arquivo(self, conteudo, nome, content_type):
+        self.chamadas.append(("enviar_arquivo", (nome, content_type)))
+        return "upload-1"
+
+    def obter_pagina(self, page_id):
+        return {"properties": {}}
+
+    def atualizar_pagina(self, page_id, props):
+        self.chamadas.append(("atualizar_pagina", (page_id, props)))
+        return {"id": page_id}
+
+    def consultar_database(self, database_id, page_size=1, filtro=None):
+        return []
+
+    def criar_pagina(self, database_id, props):
+        self.chamadas.append(("criar_pagina", (database_id, props)))
+        return {"id": "linha-1"}
+
+
+class TestNovasFerramentas:
+    def _patch(self, cliente):
+        return mock.patch("mcp_server._criar_notion_client", return_value=cliente)
+
+    def test_create_database_monta_schema_e_titulo_automatico(self):
+        cliente = _ClienteNovasFerramentas()
+        with self._patch(cliente):
+            resultado = create_database(
+                pagina_id="pag1",
+                titulo="Cadastro",
+                propriedades={"Seguidores": "numero"},
+                prefixo_id="DVIP",
+            )
+        assert resultado["id"] == "db_novo"
+        _, (pagina, titulo, schema, kwargs) = cliente.chamadas[0]
+        assert schema["Seguidores"] == {"number": {}}
+        assert schema["Nome"] == {"title": {}}
+        assert kwargs["prefixo_id"] == "DVIP"
+
+    def test_create_database_tipo_invalido_vira_value_error(self):
+        with self._patch(_ClienteNovasFerramentas()):
+            with pytest.raises(ValueError):
+                create_database(
+                    pagina_id="pag1", titulo="X", propriedades={"Valor": "moeda"}
+                )
+
+    def test_import_spreadsheet_csv(self, tmp_path):
+        planilha = tmp_path / "contas.csv"
+        planilha.write_text("Nome,Seguidores\nConta A,1.614\n", encoding="utf-8")
+        cliente = _ClienteNovasFerramentas()
+        with self._patch(cliente):
+            resultado = import_spreadsheet(
+                database_id="db1",
+                caminho=str(planilha),
+                tipos={"Seguidores": "numero"},
+            )
+        assert resultado["criados"] == 1
+        props = [c for c in cliente.chamadas if c[0] == "criar_pagina"][0][1][1]
+        assert props["Seguidores"] == {"number": 1614}
+
+    def test_upload_file_anexa_na_propriedade(self, tmp_path):
+        arquivo = tmp_path / "rel.docx"
+        arquivo.write_bytes(b"x")
+        cliente = _ClienteNovasFerramentas()
+        with self._patch(cliente):
+            resultado = upload_file(page_id="pag1", caminho=str(arquivo))
+        assert resultado["upload_id"] == "upload-1"
+        atualizacao = [c for c in cliente.chamadas if c[0] == "atualizar_pagina"][0]
+        assert "Arquivos e mídia" in atualizacao[1][1]
+
+    def test_move_page_e_move_database(self):
+        cliente = _ClienteNovasFerramentas()
+        with self._patch(cliente):
+            pagina = move_page(page_id="pag1", novo_pai_id="pai2")
+            db = move_database(database_id="db1", novo_pai_id="pai2")
+        assert pagina == {"id": "pag1", "novo_pai": "pai2", "tipo_pai": "page_id"}
+        assert db == {"id": "db1", "novo_pai": "pai2"}
+        assert ("mover_pagina", ("pag1", "pai2", "page_id")) in cliente.chamadas
+        assert ("mover_database", ("db1", "pai2")) in cliente.chamadas

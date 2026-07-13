@@ -619,6 +619,209 @@ def delete_block(block_id: str) -> dict[str, Any]:
     return _executar(_apagar)
 
 
+@mcp.tool(name="notion.create_database", annotations=_CREATE)
+def create_database(
+    pagina_id: str,
+    titulo: str,
+    propriedades: dict[str, str] | None = None,
+    is_inline: bool = False,
+    icone: str | None = None,
+    descricao: str | None = None,
+    prefixo_id: str | None = None,
+) -> dict[str, Any]:
+    """Cria um database numa pagina, com schema tipado.
+
+    Ferramenta de escrita (write) — requer confirmacao do usuario.
+
+    Args:
+        pagina_id: ID da pagina que recebe o database.
+        titulo: Titulo do database.
+        propriedades: Mapeamento ``coluna -> tipo`` (titulo, texto, numero,
+            data, select, multi_select, checkbox, email, url, telefone,
+            pessoas, arquivos). Sem coluna 'titulo', uma propriedade "Nome"
+            e criada automaticamente.
+        is_inline: Cria embutido no corpo da pagina.
+        icone: Emoji usado como icone.
+        descricao: Descricao do database.
+        prefixo_id: Cria propriedade "ID" (unique_id) com este prefixo —
+            o prefixo e unico por workspace.
+
+    Returns:
+        Um dict com ``id``, ``titulo``, ``url`` e ``propriedades``.
+    """
+
+    from notion_starter import properties as starter_properties
+
+    def _criar() -> dict[str, Any]:
+        pagina = _texto_obrigatorio(pagina_id, "pagina_id")
+        titulo_normalizado = _texto_obrigatorio(titulo, "titulo")
+        schema: dict[str, dict[str, object]] = {}
+        for nome, tipo in (propriedades or {}).items():
+            schema[nome] = starter_properties.schema_propriedade(tipo)
+        if not any("title" in fragmento for fragmento in schema.values()):
+            schema["Nome"] = starter_properties.schema_propriedade("titulo")
+        resultado = _criar_notion_client().criar_database(
+            pagina,
+            titulo_normalizado,
+            schema,
+            is_inline=is_inline,
+            icone=_texto_opcional(icone),
+            descricao=_texto_opcional(descricao),
+            prefixo_id=_texto_opcional(prefixo_id),
+        )
+        return {
+            "id": resultado.get("id", ""),
+            "titulo": titulo_normalizado,
+            "url": resultado.get("url"),
+            "propriedades": sorted(schema),
+        }
+
+    return _executar(_criar)
+
+
+@mcp.tool(name="notion.import_spreadsheet", annotations=_CREATE)
+def import_spreadsheet(
+    database_id: str,
+    caminho: str,
+    aba: str | None = None,
+    coluna_titulo: str | None = None,
+    tipos: dict[str, str] | None = None,
+    renomear: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    """Importa uma planilha local (.xlsx/.csv) para um database do Notion.
+
+    Ferramenta de escrita (write) — requer confirmacao do usuario. O import e
+    idempotente: cada linha faz upsert pela propriedade "Origem"
+    (arquivo:linha), entao reexecutar atualiza em vez de duplicar.
+
+    Args:
+        database_id: Database de destino.
+        caminho: Arquivo .xlsx (requer openpyxl) ou .csv local.
+        aba: Aba do .xlsx (padrao: a ativa).
+        coluna_titulo: Coluna usada como titulo da linha (padrao: a primeira).
+        tipos: Mapeamento ``coluna -> tipo`` (numero, data, select, checkbox,
+            email, url, telefone; padrao: texto). Numeros e datas aceitam o
+            formato brasileiro; valores invalidos vao para "Observações".
+        renomear: Mapeamento ``coluna -> nome da propriedade`` no Notion.
+
+    Returns:
+        Um dict com ``criados``, ``atualizados``, ``erros`` e
+        ``itens_processados``.
+    """
+
+    from notion_starter.services import ingestao as svc
+
+    def _importar() -> dict[str, Any]:
+        db = _texto_obrigatorio(database_id, "database_id")
+        fonte = svc.FontePlanilha(
+            _texto_obrigatorio(caminho, "caminho"),
+            aba=_texto_opcional(aba),
+            coluna_titulo=_texto_opcional(coluna_titulo),
+            tipos=tipos or {},
+            renomear=renomear or {},
+        )
+        resultado = svc.ingerir(fonte, client=_criar_notion_client(), database_id=db)
+        return {
+            "database_id": db,
+            "criados": resultado.criados,
+            "atualizados": resultado.atualizados,
+            "erros": resultado.erros,
+            "itens_processados": resultado.itens_processados,
+        }
+
+    return _executar(_importar)
+
+
+@mcp.tool(name="notion.upload_file", annotations=_CREATE)
+def upload_file(
+    page_id: str,
+    caminho: str,
+    propriedade: str = "Arquivos e mídia",
+    substituir: bool = False,
+) -> dict[str, Any]:
+    """Sobe um arquivo local (ate 20 MB) e anexa numa propriedade de arquivos.
+
+    Ferramenta de escrita (write) — requer confirmacao do usuario. Por padrao
+    o anexo e acrescentado aos existentes, sem apagar nada.
+
+    Args:
+        page_id: Linha de database que recebe o anexo.
+        caminho: Arquivo local a subir.
+        propriedade: Nome da propriedade de arquivos (padrao: "Arquivos e mídia").
+        substituir: Troca os anexos existentes em vez de acrescentar.
+
+    Returns:
+        Um dict com ``upload_id``, ``arquivo`` e ``total_anexos``.
+    """
+
+    from notion_starter.services import anexos as svc
+
+    def _anexar() -> dict[str, Any]:
+        return svc.anexar_arquivo(
+            _texto_obrigatorio(page_id, "page_id"),
+            _texto_obrigatorio(caminho, "caminho"),
+            propriedade=_texto_opcional(propriedade) or "Arquivos e mídia",
+            substituir=substituir,
+            cliente=_criar_notion_client(),
+        )
+
+    return _executar(_anexar)
+
+
+@mcp.tool(name="notion.move_page", annotations=_UPDATE)
+def move_page(
+    page_id: str,
+    novo_pai_id: str,
+    tipo_pai: str = "page_id",
+) -> dict[str, Any]:
+    """Move (re-parenteia) uma pagina para outra pagina ou database.
+
+    Ferramenta de escrita idempotente — requer confirmacao do usuario.
+    ATENCAO: mover uma pagina que CONTEM databases e aceito pela API mas
+    silenciosamente ignorado; nesse caso use notion.move_database em cada
+    database e descarte a pagina vazia.
+
+    Args:
+        page_id: ID da pagina a mover.
+        novo_pai_id: ID do novo pai.
+        tipo_pai: ``"page_id"`` (padrao) ou ``"database_id"``.
+
+    Returns:
+        Um dict com ``id``, ``novo_pai`` e ``tipo_pai``.
+    """
+
+    def _mover() -> dict[str, Any]:
+        pagina = _texto_obrigatorio(page_id, "page_id")
+        destino = _texto_obrigatorio(novo_pai_id, "novo_pai_id")
+        _criar_notion_client().mover_pagina(pagina, destino, tipo_pai=tipo_pai)
+        return {"id": pagina, "novo_pai": destino, "tipo_pai": tipo_pai}
+
+    return _executar(_mover)
+
+
+@mcp.tool(name="notion.move_database", annotations=_UPDATE)
+def move_database(database_id: str, novo_pai_id: str) -> dict[str, Any]:
+    """Move (re-parenteia) um database inteiro para outra pagina.
+
+    Ferramenta de escrita idempotente — requer confirmacao do usuario.
+
+    Args:
+        database_id: ID do database a mover.
+        novo_pai_id: ID da pagina que recebera o database.
+
+    Returns:
+        Um dict com ``id`` e ``novo_pai``.
+    """
+
+    def _mover() -> dict[str, Any]:
+        db = _texto_obrigatorio(database_id, "database_id")
+        destino = _texto_obrigatorio(novo_pai_id, "novo_pai_id")
+        _criar_notion_client().mover_database(db, destino)
+        return {"id": db, "novo_pai": destino}
+
+    return _executar(_mover)
+
+
 # ---------------------------------------------------------------------------
 # Ponto de entrada
 # ---------------------------------------------------------------------------
