@@ -12,6 +12,23 @@
 
 ---
 
+## 📊 ESTADO ATUAL (RESUMO VIVO)
+
+Última atualização: [2026-07-18]
+
+- Fase: produto local funcional com launcher, API Django, SPA React e servidor
+  MCP sobre o `notion-starter`.
+- Qualidade: 256 testes verdes, 2 skips esperados, `ruff` e `oxlint` limpos e
+  build Vite aprovado; CI cobre Python 3.10–3.13 e o frontend em Node 22.
+- Documentação: README alinhado ao Felixo System Design e contrato de qualidade
+  centralizado em `QUALIDADE.md`.
+- Próximos passos abertos: escrita genérica na exploração, novas visualizações e
+  empacotamento do launcher.
+- Risco conhecido: dependências Python usam limites mínimos e são monitoradas
+  pela matriz de CI; o frontend possui lockfile.
+
+---
+
 ## 🎯 OBJETIVO DO PROJETO
 
 [2026-07-02] `notion-workspace-app` é a aplicação completa do ecossistema: API REST
@@ -78,6 +95,13 @@ servidor MCP com as ferramentas `notion.*` (`server/mcp_server.py`) e o launcher
   `notion.move_page` e `notion.move_database` — bordas finas sobre o
   notion-starter. Decisão: paridade só no MCP; a API REST segue servindo apenas
   o front. Validação: 255 testes verdes (2 skips) e ruff limpo.
+- [2026-07-18] ✅ Documentação alinhada ao Felixo System Design: README passou a
+  ter badges, índice, árvore real, guia de uso e rodapé open source;
+  `QUALIDADE.md` centralizou os gates Python/frontend e registrou a exceção
+  motivada de versões mínimas no backend. Motivo: deixar setup e critério de
+  pronto verificáveis sem alterar contratos ou dependências. Validação pelo
+  orquestrador: 256 testes verdes, 2 skips esperados, `ruff`/`oxlint` limpos e
+  build Vite aprovado; mudanças desta rodada restritas à documentação.
 
 ---
 
