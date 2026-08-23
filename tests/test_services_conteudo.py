@@ -23,6 +23,37 @@ def _cliente() -> NotionClient:
     return NotionClient(token=TOKEN, max_retries=0)
 
 
+def _registrar_pagina_sem_database(page_id: str = "page1") -> None:
+    """Responde à leitura que ``escrever_conteudo`` faz **antes** de escrever.
+
+    Escrever numa página que contém uma database cria parágrafo solto embaixo da
+    tabela, então o serviço lê os blocos primeiro para recusar esse caso. Sem
+    registrar esse ``GET``, o teste falha por falta de mock — e não por causa do
+    comportamento que ele quer provar. Lista vazia = página é documento.
+    """
+
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/blocks/{page_id}/children",
+        json={"results": [], "has_more": False},
+        status=200,
+    )
+
+
+def _corpos_enviados() -> list[dict]:
+    """Os corpos dos ``PATCH`` de escrita, na ordem em que saíram.
+
+    Filtrar por método em vez de indexar ``responses.calls`` mantém a asserção
+    olhando para a escrita mesmo quando o serviço faz leituras antes ou depois.
+    """
+
+    return [
+        json.loads(chamada.request.body)
+        for chamada in responses.calls
+        if chamada.request.method == "PATCH"
+    ]
+
+
 @responses.activate
 def test_ler_conteudo_devolve_markdown():
     responses.add(
@@ -42,6 +73,7 @@ def test_ler_conteudo_devolve_markdown():
 
 @responses.activate
 def test_escrever_conteudo_anexa_e_conta_blocos():
+    _registrar_pagina_sem_database()
     responses.add(
         responses.PATCH,
         f"{NOTION_BASE_URL}/blocks/page1/children",
@@ -50,7 +82,7 @@ def test_escrever_conteudo_anexa_e_conta_blocos():
     )
     total = svc.escrever_conteudo("page1", "linha um\nlinha dois", cliente=_cliente())
     assert total == 2
-    corpo = json.loads(responses.calls[0].request.body)
+    (corpo,) = _corpos_enviados()
     assert len(corpo["children"]) == 2
 
 
@@ -60,6 +92,7 @@ def test_escrever_conteudo_fatia_em_lotes_de_100():
         filhos = json.loads(request.body)["children"]
         return (200, {}, json.dumps({"results": filhos}))
 
+    _registrar_pagina_sem_database()
     responses.add_callback(
         responses.PATCH,
         f"{NOTION_BASE_URL}/blocks/page1/children",
@@ -69,7 +102,7 @@ def test_escrever_conteudo_fatia_em_lotes_de_100():
     markdown = "\n\n".join(f"linha {i}" for i in range(250))
     total = svc.escrever_conteudo("page1", markdown, cliente=_cliente())
     assert total == 250
-    tamanhos = [len(json.loads(c.request.body)["children"]) for c in responses.calls]
+    tamanhos = [len(corpo["children"]) for corpo in _corpos_enviados()]
     assert tamanhos == [100, 100, 50]
 
 

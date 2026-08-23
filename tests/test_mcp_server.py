@@ -573,6 +573,14 @@ class TestConteudo:
 
     @responses.activate
     def test_append_content_conta_blocos(self):
+        # A escrita lê a página antes, para recusar texto solto embaixo de uma
+        # database. Lista vazia = é documento, pode escrever.
+        responses.add(
+            responses.GET,
+            f"{NOTION_BASE_URL}/blocks/page1/children",
+            json={"results": [], "has_more": False},
+            status=200,
+        )
         responses.add(
             responses.PATCH,
             f"{NOTION_BASE_URL}/blocks/page1/children",

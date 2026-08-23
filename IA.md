@@ -103,6 +103,28 @@ servidor MCP com as ferramentas `notion.*` (`server/mcp_server.py`) e o launcher
   orquestrador: 256 testes verdes, 2 skips esperados, `ruff`/`oxlint` limpos e
   build Vite aprovado; mudanças desta rodada restritas à documentação.
 
+- [2026-08-23] ✅ Três testes vermelhos consertados **na expectativa, não na
+  implementação**: `test_escrever_conteudo_anexa_e_conta_blocos`,
+  `test_escrever_conteudo_fatia_em_lotes_de_100` e
+  `test_append_content_conta_blocos` registravam só o `PATCH` de escrita, mas
+  `escrever_conteudo` faz um `GET /blocks/{id}/children` **antes** — a leitura
+  que recusa escrever texto solto numa página que contém database (o erro caro
+  de quem recebe um link do Notion sem abrir). O mock que faltava foi
+  registrado (`{"results": [], "has_more": False}` = página é documento) e as
+  asserções passaram a filtrar as chamadas por método (`_corpos_enviados`), em
+  vez de indexar `responses.calls[0]` — assim uma leitura a mais não quebra o
+  teste de novo. Motivo de não mexer no código: o `GET` é a proteção, não o
+  defeito. Validação: **256 testes verdes, 2 skips**, `ruff` limpo. Prova de
+  que o teste ainda pega regressão: com `_MAX_BLOCOS_POR_REQUISICAO` alterado
+  de 100 para 60, o teste de lotes **falha**.
+- [2026-08-23] ⚠️ Medido no caminho: **a suíte deste módulo testa, por padrão,
+  a cópia instalada do `notion_starter` em `site-packages`, não o código de
+  `modules/notion-starter/src`**. A mesma mutação (lotes de 60) só derrubou o
+  teste com `PYTHONPATH=../notion-starter/src`; sem isso, passou verde com o
+  código alterado. Ou seja, correção feita no módulo vizinho **não é exercida**
+  por esta suíte. Não alterado aqui — é a tarefa aberta sobre a fonte de
+  verdade do `notion-starter`, que ganha esta evidência.
+
 ---
 
 Ideias abertas à contribuição: escrita genérica na aba Explorar, mais
