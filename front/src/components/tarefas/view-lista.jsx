@@ -60,7 +60,7 @@ export function ViewLista({ tarefas, onEdit }) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-zinc-400 hover:text-white"
+                  className="h-10 w-10 text-zinc-400 hover:text-white"
                   aria-label={`Editar tarefa: ${t.nome}`}
                   onClick={(e) => { e.stopPropagation(); onEdit(t) }}
                 >

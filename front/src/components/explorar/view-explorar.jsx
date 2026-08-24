@@ -34,7 +34,9 @@ export function ViewExplorar() {
             className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"
             aria-hidden="true"
           />
+          <label htmlFor="explorar-busca" className="sr-only">Buscar database</label>
           <input
+            id="explorar-busca"
             type="search"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}

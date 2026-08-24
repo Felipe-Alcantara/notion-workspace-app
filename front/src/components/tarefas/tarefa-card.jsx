@@ -2,31 +2,27 @@ import { Card, CardContent } from '../ui/card'
 import { StatusBadge, Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { Calendar, Clock, Layers, Pencil, ExternalLink } from 'lucide-react'
-import { abrirNoNotion } from '../../utils/abrir-no-notion'
 
 export function TarefaCard({ tarefa, onEdit }) {
   const temUrl = Boolean(tarefa.url)
   return (
     <Card
-      className={temUrl ? 'cursor-pointer hover:border-brand-500/30' : ''}
-      onClick={temUrl ? () => abrirNoNotion(tarefa) : undefined}
-      role={temUrl ? 'button' : undefined}
-      tabIndex={temUrl ? 0 : undefined}
-      aria-label={temUrl ? `Abrir no Notion: ${tarefa.nome}` : undefined}
-      onKeyDown={temUrl ? (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrirNoNotion(tarefa) }
-      } : undefined}
+      className={temUrl ? 'hover:border-brand-500/30' : ''}
     >
       <CardContent className="space-y-3">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="text-sm font-semibold text-white leading-tight">
-            {tarefa.nome}
+          <h3 className="min-w-0 text-sm font-semibold leading-tight text-white">
+            {temUrl ? (
+              <a href={tarefa.url} target="_blank" rel="noreferrer" className="rounded-sm focus-visible:outline-2 focus-visible:outline-brand-500">
+                {tarefa.nome}
+              </a>
+            ) : tarefa.nome}
             {temUrl && <ExternalLink size={12} className="inline ml-1.5 text-zinc-500" aria-hidden="true" />}
           </h3>
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 shrink-0 text-zinc-400 hover:text-white"
+            className="h-10 w-10 shrink-0 text-zinc-400 hover:text-white"
             aria-label={`Editar tarefa: ${tarefa.nome}`}
             onClick={(e) => { e.stopPropagation(); onEdit(tarefa) }}
           >

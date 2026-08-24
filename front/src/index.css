@@ -15,5 +15,9 @@
 /* Scroll suave */
 html { scroll-behavior: smooth; }
 
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
 /* Selection */
 ::selection { background: rgba(99, 102, 241, 0.4); }
