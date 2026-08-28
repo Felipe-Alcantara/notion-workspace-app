@@ -116,7 +116,7 @@ export function TarefaFormModal({ open, onClose, onSubmit, tarefa, opcoes }) {
                 key={a.id}
                 type="button"
                 onClick={() => toggleArea(a.id)}
-                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
+                className={`min-h-11 px-3 py-2 rounded-full text-xs font-medium border transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 ${
                   areas.includes(a.id)
                     ? 'bg-brand-500/20 text-brand-400 border-brand-500/40'
                     : 'bg-zinc-800 text-zinc-400 border-zinc-700/50 hover:text-white'

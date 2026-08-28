@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { X } from 'lucide-react'
 
 const FOCUSABLE_SELECTOR = [
@@ -16,6 +16,7 @@ export function Modal({ open, onClose, title, children }) {
   const dialogRef = useRef(null)
   const previousFocusRef = useRef(null)
   const titleId = useId()
+  const shouldReduceMotion = useReducedMotion()
 
   useEffect(() => {
     if (!open) return
@@ -68,7 +69,7 @@ export function Modal({ open, onClose, title, children }) {
       {open && (
         <motion.div
           ref={overlayRef}
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -79,11 +80,11 @@ export function Modal({ open, onClose, title, children }) {
         >
           <motion.div
             ref={dialogRef}
-            className="max-h-[90vh] w-11/12 max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl"
-            initial={{ scale: 0.95, opacity: 0 }}
+            className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl"
+            initial={shouldReduceMotion ? false : { scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            transition={{ duration: 0.15 }}
+            exit={shouldReduceMotion ? undefined : { scale: 0.95, opacity: 0 }}
+            transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.15 }}
             tabIndex={-1}
           >
             <div className="flex items-center justify-between p-5 border-b border-white/5">
@@ -91,7 +92,7 @@ export function Modal({ open, onClose, title, children }) {
               <button
                 type="button"
                 onClick={onClose}
-                className="text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-zinc-400 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 cursor-pointer"
                 aria-label="Fechar"
               >
                 <X size={18} />
