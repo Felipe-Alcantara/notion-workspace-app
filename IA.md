@@ -174,3 +174,7 @@ a asserção passou a localizar a chamada `POST` correta, pois a descoberta do
 schema acontece antes da criação.
 Validação: teste reproduzido com o starter local 0.3.0; a matriz da CI será
 reexecutada no novo commit.
+
+O novo commit passou na matriz oficial: **279 testes** em Python 3.10, 3.11,
+3.12 e 3.13, além de lint/build da SPA. O fixture agora cobre o contrato real do
+starter publicado e não depende da ordem incidental das chamadas mockadas.
