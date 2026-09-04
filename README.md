@@ -7,6 +7,7 @@
 ![React 18](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![Vite 8](https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white)
 ![Licença MIT](https://img.shields.io/badge/Licen%C3%A7a-MIT-green?style=for-the-badge)
+[![PyPI](https://img.shields.io/pypi/v/notion-workspace-app?style=for-the-badge&label=PyPI)](https://pypi.org/project/notion-workspace-app/)
 
 **Aplicação local completa para operar o Notion com API Django, SPA React, servidor MCP e launcher TUI.**
 
@@ -124,9 +125,12 @@ notion-automacoes app start
 notion-automacoes mcp start
 ```
 
-O release técnico candidato é `0.3.0`; a publicação no PyPI aguarda confirmação
-de nome/ownership/metadados legais. Consulte o guia do hub para a sequência de
-release e o smoke em Windows, macOS e Linux.
+O pacote [`notion-workspace-app==0.3.0`](https://pypi.org/project/notion-workspace-app/)
+está publicado no PyPI. Para o produto completo, a instalação recomendada é a
+fachada [`notion-automacoes[app]`](https://pypi.org/project/notion-automacoes/),
+que instala este app e a CLI em conjunto. Consulte o
+[guia de distribuição do hub](https://github.com/Felipe-Alcantara/Automa-es-do-Notion/blob/main/docs/DISTRIBUICAO.md)
+para a matriz de smoke e os limites do release.
 
 ### Início rápido
 
@@ -152,7 +156,13 @@ também é possível instalar dependências, configurar o ambiente e conferir o
 status dos componentes.
 
 Quando executado a partir do wheel, o mesmo launcher sobe apenas o Django e
-serve a SPA empacotada; Node/npm não são consultados.
+serve a SPA empacotada; Node/npm não são consultados. Os entry points diretos
+também estão disponíveis:
+
+```bash
+notion-automacoes-app --help
+notion-automacoes-mcp --help
+```
 
 ---
 
@@ -198,7 +208,7 @@ Este projeto está sob a licença MIT — veja [`LICENSE`](LICENSE).
 
 ## 👤 Autor
 
-**Felipe Martin**
+**Felipe Alcantara**
 
 - GitHub: [@Felipe-Alcantara](https://github.com/Felipe-Alcantara)
 - Repositório: [notion-workspace-app](https://github.com/Felipe-Alcantara/notion-workspace-app)

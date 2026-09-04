@@ -2,6 +2,11 @@
 
 Aplicação completa (Django + React + MCP + TUI), módulo do ecossistema [Automações do Notion](https://github.com/Felipe-Alcantara/Automa-es-do-Notion) — o hub tem o roteamento completo entre módulos.
 
+O pacote público é [`notion-workspace-app`](https://pypi.org/project/notion-workspace-app/),
+atualmente em `0.3.0`. O uso recomendado do produto completo é pela fachada
+`pipx install "notion-automacoes[app]"`; Node/npm ficam restritos ao desenvolvimento
+da SPA.
+
 ## Arquitetura (fronteiras sagradas)
 
 ```
@@ -32,12 +37,15 @@ são shims para `notion-starter`. Bugfix de regra compartilhada deve ser feito e
 ```bash
 python -m pip install -e ".[dev]"
 python -m ruff check .
-python -m pytest        # front: cd front && npm test / npx oxlint
+python -m pytest
 ```
 
-O build de distribuição também precisa executar `cd front && npm run lint && npm run build`;
+O gate do front executa `cd front && npm run lint && npm run build`;
 o workflow de release coloca o bundle compilado dentro do wheel, para que o usuário
 final não precise de Node/npm.
+
+Ao alterar rotas, ferramentas MCP, launcher, empacotamento ou frontend, atualize
+`README.md`, `front/README.md` quando aplicável, `QUALIDADE.md` e `IA.md`.
 
 ## Convenções
 

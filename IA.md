@@ -16,14 +16,15 @@
 
 Última atualização: [2026-09-04]
 
-- Fase: produto local funcional e preparado para distribuição como extra `app` da
-  CLI única, com launcher, API Django, SPA React empacotada e servidor MCP.
+- Fase: produto local funcional e publicado como `notion-workspace-app==0.3.0`,
+  além de disponível como extra `app` da CLI única, com launcher, API Django,
+  SPA React empacotada e servidor MCP.
 - Qualidade: 256 testes verdes, 2 skips esperados, `ruff` e `oxlint` limpos e
   build Vite aprovado; CI cobre Python 3.10–3.13 e o frontend em Node 22.
 - Documentação: README alinhado ao Felixo System Design e contrato de qualidade
   centralizado em `QUALIDADE.md`.
-- Próximos passos abertos: confirmação do contrato de publicação no PyPI, escrita
-  genérica na exploração e novas visualizações.
+- Próximos passos abertos: escrita genérica na exploração e novas visualizações,
+  como contribuições isoladas.
 - Risco conhecido: dependências Python usam limites mínimos e são monitoradas
   pela matriz de CI; o frontend possui lockfile.
 
@@ -154,3 +155,12 @@ e `npm run build` aprovados, `twine check` aprovado e smoke do wheel limpo
 confirmando `start_app`, a rota `/` com o bundle e os dois entry points. O smoke
 real da matriz Windows/macOS ainda depende da execução do workflow no GitHub;
 publicação e Trusted Publishing não foram executados.
+
+## [2026-09-04] Documentação e estado público atualizados
+
+O README, `AGENTS.md`, `CONTRIBUTING.md`, `QUALIDADE.md` e `front/README.md`
+agora distinguem o checkout de desenvolvimento do wheel distribuído, que já
+contém a SPA compilada. O pacote `notion-workspace-app==0.3.0` e a fachada
+`notion-automacoes[app]` são apontados no PyPI; Node/npm ficam documentados como
+dependência de desenvolvimento. A titularidade legal registrada é `Felipe
+Alcantara` e a publicação deixa de ser descrita como pendência.

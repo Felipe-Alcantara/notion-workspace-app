@@ -50,5 +50,13 @@ versionado e `npm ci` instala a resolução registrada.
 O workflow de release compila a SPA para `server/static/frontend/`, valida wheel
 e sdist com `twine check` e executa smoke nos três sistemas suportados. O launcher
 detecta a instalação empacotada e serve o bundle via Django sem consultar
-Node/npm. A versão candidata atual é `0.3.0`; publicação e Trusted Publishing
-aguardam a confirmação de nome, ownership e metadados legais.
+Node/npm. A versão pública atual é `0.3.0`, publicada no
+[PyPI](https://pypi.org/project/notion-workspace-app/) por Trusted Publishing.
+Os metadados legais do pacote identificam `Felipe Alcantara` como titular.
+
+## Documentação
+
+Mudanças em rotas REST, ferramentas MCP, launcher, empacotamento ou frontend
+exigem atualização de `README.md`, `front/README.md` quando aplicável e `IA.md`.
+A documentação deve separar o fluxo de checkout (Node/npm) do fluxo distribuído
+(wheel com SPA incluída) e não conter segredos, IDs reais ou caminhos privados.

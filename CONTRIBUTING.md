@@ -8,6 +8,12 @@ de documentação, melhorias de UX no front, novos endpoints e testes são bem-v
 > Contribuições devem preservar os contratos existentes (API REST, ferramentas
 > MCP), a documentação viva e o gate de qualidade abaixo.
 
+O pacote publicado é [`notion-workspace-app`](https://pypi.org/project/notion-workspace-app/);
+a instalação completa para usuários é feita pela fachada
+[`notion-automacoes[app]`](https://pypi.org/project/notion-automacoes/). O wheel
+inclui a SPA compilada; Node/npm são necessários apenas no checkout de
+desenvolvimento.
+
 ---
 
 ## 🚀 Como Contribuir
@@ -31,17 +37,17 @@ python start_app.py            # menu: instala, configura e sobe tudo
 # Gate Python (HTTP mockado — não precisa de token nem rede)
 python -m pip install -e ".[dev]"
 python -m pip install -r requirements.txt  # alternativa de runtime
-ruff check .
+python -m ruff check .
 python -m pytest
 
 # Gate do front (SPA React)
 cd front
-npm install
+npm ci
 npm run lint
 npm run build
 ```
 
-Requer Python 3.10+ e Node 22+. Copie `.env.example` para `.env` só para uso real
+Requer Python 3.10+ e Node 20.19+ ou 22.12+. Copie `.env.example` para `.env` só para uso real
 contra um workspace do Notion — nunca versione o `.env`.
 
 ---

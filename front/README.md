@@ -1,16 +1,21 @@
 # Front React
 
-SPA do Ciclo 2 para operar tarefas do Notion pelo contrato REST em `docs/CONTRATOS.md`.
+SPA React do `notion-workspace-app` para operar tarefas do Notion pelo contrato
+REST documentado no hub em [`docs/CONTRATOS.md`](https://github.com/Felipe-Alcantara/Automa-es-do-Notion/blob/main/docs/CONTRATOS.md).
+
+O frontend é parte do app, não um pacote distribuído separado. No uso público,
+ele já vem compilado no wheel de `notion-workspace-app` e é servido pelo Django;
+Node/npm são necessários somente para desenvolvimento e para o workflow de release.
 
 ## Rodar localmente
 
 ```bash
 cd front
-npm install
+npm ci
 npm run dev
 ```
 
-O Vite exige Node 20.19+ ou 22.12+. Ele sobe em `http://localhost:5173` e proxia
+O Vite exige Node 20.19+ ou 22.12+. Ele sobe em `http://localhost:5173` e faz proxy
 `/api` para `http://127.0.0.1:8000`.
 
 O app usa o Notion como fonte de verdade por meio da API Django. Se a API falhar,
@@ -27,10 +32,14 @@ npm run lint
 npm run build
 ```
 
-O gate completo do repositório roda a partir da raiz:
+O gate completo do repositório roda a partir da raiz do app:
 
 ```bash
-python3 scripts/quality_check.py
+python -m ruff check .
+python -m pytest
+cd front
+npm run lint
+npm run build
 ```
 
 ## Funcionalidades
