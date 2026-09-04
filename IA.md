@@ -164,3 +164,13 @@ contém a SPA compilada. O pacote `notion-workspace-app==0.3.0` e a fachada
 `notion-automacoes[app]` são apontados no PyPI; Node/npm ficam documentados como
 dependência de desenvolvimento. A titularidade legal registrada é `Felipe
 Alcantara` e a publicação deixa de ser descrita como pendência.
+
+## [2026-09-04] Fixture REST alinhado ao contrato do starter 0.3.0
+
+O gate da CI revelou que o teste de criação REST simulava um database sem coluna
+`title`. Como `notion-starter==0.3.0` descobre a coluna de título no schema antes
+de criar uma linha, o fixture foi corrigido para declarar `Tarefa` como título e
+a asserção passou a localizar a chamada `POST` correta, pois a descoberta do
+schema acontece antes da criação.
+Validação: teste reproduzido com o starter local 0.3.0; a matriz da CI será
+reexecutada no novo commit.

@@ -152,6 +152,9 @@ def test_post_tarefa_cria(client):
         f"{NOTION_BASE_URL}/databases/{DB}",
         json={
             "properties": {
+                "Tarefa": {"type": "title", "title": {}},
+                "Etapa": {"type": "status", "status": {}},
+                "Esforço": {"type": "status", "status": {}},
                 "Áreas da vida": {
                     "type": "relation",
                     "relation": {"database_id": "db_areas"},
@@ -195,7 +198,12 @@ def test_post_tarefa_cria(client):
     assert corpo["areas"] == ["a1"]
     assert corpo["areas_nomes"] == ["Estudos"]
 
-    request = json.loads(responses.calls[0].request.body)
+    request_call = next(
+        call
+        for call in responses.calls
+        if call.request.method == "POST" and call.request.url == f"{NOTION_BASE_URL}/pages"
+    )
+    request = json.loads(request_call.request.body)
     assert request["properties"]["Esforço"]["status"]["name"] == "Dias"
     assert request["properties"]["Áreas da vida"]["relation"] == [{"id": "a1"}]
 
