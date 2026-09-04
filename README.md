@@ -6,8 +6,8 @@
 ![Django 5+](https://img.shields.io/badge/Django-5%2B-092E20?style=for-the-badge&logo=django&logoColor=white)
 ![React 18](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![Vite 8](https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white)
-![Licença MIT](https://img.shields.io/badge/Licen%C3%A7a-MIT-green?style=for-the-badge)
 [![PyPI](https://img.shields.io/pypi/v/notion-workspace-app?style=for-the-badge&label=PyPI)](https://pypi.org/project/notion-workspace-app/)
+![Licença MIT](https://img.shields.io/badge/Licen%C3%A7a-MIT-green?style=for-the-badge)
 
 **Aplicação local completa para operar o Notion com API Django, SPA React, servidor MCP e launcher TUI.**
 
