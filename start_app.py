@@ -36,6 +36,7 @@ SERVIDOR = RAIZ / "server"
 MANAGE_PY = SERVIDOR / "manage.py"
 FRONT = RAIZ / "front"
 FRONT_NODE_MODULES = FRONT / "node_modules"
+FRONT_BUNDLE_INDEX = SERVIDOR / "static" / "frontend" / "index.html"
 QUALITY_SCRIPT = RAIZ / "scripts" / "quality_check.py"
 TOKEN_ENV = "NOTION_TOKEN"
 DATABASE_ENV = "NOTION_DATABASE_ID"
@@ -47,8 +48,9 @@ API_HEALTH_URL = f"{API_URL}api/health"
 FRONT_HOST = "127.0.0.1"
 FRONT_PORT = "5173"
 FRONT_ENDERECO_PADRAO = f"{FRONT_HOST}:{FRONT_PORT}"
-FRONT_URL = f"http://{FRONT_ENDERECO_PADRAO}/"
-APP_URL = FRONT_URL
+FRONT_EMPACOTADO = FRONT_BUNDLE_INDEX.exists() and not (FRONT / "package.json").exists()
+FRONT_URL = API_URL if FRONT_EMPACOTADO else f"http://{FRONT_ENDERECO_PADRAO}/"
+APP_URL = API_URL if FRONT_EMPACOTADO else FRONT_URL
 APP_HEALTH_URL = API_HEALTH_URL
 NODE_VERSAO_MINIMA = "20.19+ ou 22.12+"
 SCHEMA_TAREFAS = {
@@ -207,6 +209,12 @@ def _tui_disponivel() -> bool:
     except ImportError:
         return False
     return True
+
+
+def _front_empacotado() -> bool:
+    """Indica se o app instalado tem a SPA dentro do pacote Python."""
+
+    return FRONT_BUNDLE_INDEX.exists() and not (FRONT / "package.json").exists()
 
 
 def _instalar_deps_tui() -> bool:
@@ -385,6 +393,9 @@ def _instalar_deps_front(console, runtime: FrontRuntime) -> bool:
 def _garantir_front_pronto(console) -> FrontRuntime | None:
     """Garante Node/npm compatíveis e dependências instaladas para a SPA."""
 
+    if _front_empacotado():
+        return None
+
     runtime = _resolver_runtime_front()
     if runtime is None:
         console.print(
@@ -457,6 +468,13 @@ def acao_instalar(console) -> None:
     """Instala/Setup: dependências Python, front React e cria o ``.env``."""
 
     console.rule("[bold]Instalar / Setup")
+    if _front_empacotado():
+        console.print(
+            "[green]✓[/green] Esta é uma instalação empacotada: Python, Django, MCP e "
+            "a SPA já estão incluídos. Configure o workspace pelo comando "
+            "[bold]notion-automacoes auth[/bold]."
+        )
+        return
     console.print(
         f"Instalando o pacote em modo editável com extras de dev "
         f'(pip install -e ".[dev]") usando {sys.executable}...'
@@ -978,14 +996,16 @@ def _app_web_ativo(url: str = APP_HEALTH_URL) -> bool:
 
 
 def _front_web_ativo(url: str = FRONT_URL) -> bool:
-    """Confirma que a SPA React/Vite está respondendo na porta esperada."""
+    """Confirma que a SPA React/Vite ou empacotada está respondendo."""
 
     try:
         with urllib.request.urlopen(url, timeout=0.5) as resposta:  # noqa: S310 - URL local fixa
             html = resposta.read().decode("utf-8", errors="replace")
     except (OSError, UnicodeError, urllib.error.URLError):
         return False
-    return resposta.status == 200 and 'id="root"' in html and "/src/main.jsx" in html
+    return resposta.status == 200 and 'id="root"' in html and (
+        "/src/main.jsx" in html or "/static/frontend/assets/" in html
+    )
 
 
 def _abrir_navegador_quando_pronto(
@@ -1077,7 +1097,7 @@ def _aguardar_processos(console, processos: list[subprocess.Popen]) -> None:
 
 
 def acao_iniciar_tudo(console) -> None:
-    """Inicia API Django + SPA React com defaults locais e abre o navegador."""
+    """Inicia API e SPA, usando bundle embutido quando instalado pelo pip."""
 
     console.rule("[bold]Iniciar tudo")
 
@@ -1094,9 +1114,11 @@ def acao_iniciar_tudo(console) -> None:
     if not _garantir_database_tarefas(console):
         return
 
-    runtime = _garantir_front_pronto(console)
-    if runtime is None:
-        return
+    runtime = None
+    if not _front_empacotado():
+        runtime = _garantir_front_pronto(console)
+        if runtime is None:
+            return
 
     api_ativa = _app_web_ativo()
     front_ativo = _front_web_ativo()
@@ -1110,10 +1132,16 @@ def acao_iniciar_tudo(console) -> None:
     if not api_ativa and not _aplicar_migracoes(console, ambiente):
         return
 
-    console.print(
-        f"Subindo API em [bold]{API_URL}[/bold] e front React em "
-        f"[bold]{APP_URL}[/bold]. O navegador abrirá automaticamente."
-    )
+    if _front_empacotado():
+        console.print(
+            f"Subindo API em [bold]{API_URL}[/bold] com a SPA empacotada. "
+            "O navegador abrirá automaticamente."
+        )
+    else:
+        console.print(
+            f"Subindo API em [bold]{API_URL}[/bold] e front React em "
+            f"[bold]{APP_URL}[/bold]. O navegador abrirá automaticamente."
+        )
     _agendar_abertura_navegador(console)
 
     processos: list[subprocess.Popen] = []
@@ -1129,9 +1157,15 @@ def acao_iniciar_tudo(console) -> None:
                 )
             )
 
-        if front_ativo:
+        if _front_empacotado():
+            console.print(
+                f"[green]✓[/green] SPA empacotada será servida pelo Django em "
+                f"[bold]{APP_URL}[/bold]."
+            )
+        elif front_ativo:
             console.print(f"[green]✓[/green] Front React já ativo em [bold]{APP_URL}[/bold].")
         else:
+            assert runtime is not None
             processos.append(
                 subprocess.Popen(
                     _comando_front(runtime),
@@ -1442,18 +1476,24 @@ def acao_status(console) -> None:
         "Django (API)",
         "[green]ok[/green]" if _django_disponivel() else "[yellow]faltando[/yellow]",
     )
-    runtime = _resolver_runtime_front()
-    if runtime is None:
-        tabela.add_row(
-            "Node do front",
-            f"[yellow]não encontrado/compatível[/yellow] (requer {NODE_VERSAO_MINIMA})",
-        )
+    if _front_empacotado():
+        tabela.add_row("Front", "[green]SPA empacotada no wheel[/green]")
+        tabela.add_row("Node do front", "[green]não necessário[/green]")
+        tabela.add_row("Deps do front", "[green]embutidas no pacote[/green]")
     else:
-        tabela.add_row("Node do front", f"[green]{runtime.versao}[/green]")
-    tabela.add_row(
-        "Deps do front",
-        "[green]ok[/green]" if _front_deps_instaladas() else "[yellow]faltando[/yellow]",
-    )
+        runtime = _resolver_runtime_front()
+        if runtime is None:
+            tabela.add_row(
+                "Node do front",
+                f"[yellow]não encontrado/compatível[/yellow] (requer {NODE_VERSAO_MINIMA})",
+            )
+            tabela.add_row("Deps do front", "[yellow]indisponíveis sem Node compatível[/yellow]")
+        else:
+            tabela.add_row("Node do front", f"[green]{runtime.versao}[/green]")
+            tabela.add_row(
+                "Deps do front",
+                "[green]ok[/green]" if _front_deps_instaladas() else "[yellow]faltando[/yellow]",
+            )
     tabela.add_row(
         "Arquivo .env",
         "[green]existe[/green]" if ENV_FILE.exists() else "[yellow]ausente[/yellow]",
@@ -1620,6 +1660,13 @@ def main(argv: list[str] | None = None) -> None:
     """Ponto de entrada: garante a TUI e abre o menu (ou um fallback claro)."""
 
     argumentos = sys.argv[1:] if argv is None else argv
+    if argumentos in (["--help"], ["-h"]):
+        print(
+            "Uso: notion-automacoes-app [--action {tudo,rodar,servidor,mcp,cli,"
+            "github,mapear,qualidade,instalar,configurar,status}]\n"
+            "Sem argumentos, abre o menu interativo."
+        )
+        return
     acao_solicitada: str | None = None
     if argumentos:
         if len(argumentos) != 2 or argumentos[0] != "--action":

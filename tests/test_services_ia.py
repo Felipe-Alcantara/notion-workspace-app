@@ -86,6 +86,18 @@ def _pagina(id_, nome, status=None, prazo=None):
     return {"id": id_, "url": f"https://notion.so/{id_}", "properties": props}
 
 
+def _schema_tarefas():
+    """Schema mínimo lido pela criação antes de enviar a nova página."""
+
+    return {
+        "properties": {
+            "Tarefa": {"type": "title", "title": {}},
+            "Etapa": {"type": "status", "status": {"options": []}},
+            "Prazo": {"type": "date", "date": {}},
+        }
+    }
+
+
 # ---------------------------------------------------------------------------
 # Interpretar comando
 # ---------------------------------------------------------------------------
@@ -186,6 +198,12 @@ def test_executar_listar_tarefas():
 
 @responses.activate
 def test_executar_criar_tarefa():
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/databases/{DB}",
+        json=_schema_tarefas(),
+        status=200,
+    )
     responses.add(
         responses.POST,
         f"{NOTION_BASE_URL}/pages",

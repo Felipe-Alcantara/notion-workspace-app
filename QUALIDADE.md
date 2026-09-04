@@ -33,13 +33,22 @@ Uma mudança está pronta quando:
   afetados;
 - riscos ou limitações restantes foram registrados.
 
-## Exceção motivada: dependências Python
+## Dependências e distribuição
 
-O `requirements.txt` usa limites mínimos (`>=`) para manter compatibilidade entre
-Python 3.10–3.13 e com a biblioteca compartilhada `notion-starter`. Esta é uma
-exceção deliberada à recomendação geral de pins exatos; a resolução é exercitada
-continuamente pela matriz da CI.
+O `pyproject.toml` é a fonte canônica do pacote e separa dependências de runtime
+das ferramentas de desenvolvimento no extra `dev`. O `requirements.txt` mantém
+um espelho simples para o fluxo de desenvolvimento legado, sem URL Git.
+
+Os limites mínimos (`>=`) mantêm compatibilidade entre Python 3.10–3.13 e com a
+biblioteca compartilhada `notion-starter`; essa é uma exceção deliberada à
+recomendação geral de pins exatos e é exercitada pela matriz da CI.
 
 O risco de novas versões compatíveis alterarem o ambiente é aceito e monitorado
 pela CI. O frontend não usa essa exceção: `front/package-lock.json` está
 versionado e `npm ci` instala a resolução registrada.
+
+O workflow de release compila a SPA para `server/static/frontend/`, valida wheel
+e sdist com `twine check` e executa smoke nos três sistemas suportados. O launcher
+detecta a instalação empacotada e serve o bundle via Django sem consultar
+Node/npm. A versão candidata atual é `0.3.0`; publicação e Trusted Publishing
+aguardam a confirmação de nome, ownership e metadados legais.

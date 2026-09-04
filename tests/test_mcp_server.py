@@ -65,6 +65,18 @@ def _pagina(id_: str, nome: str, status: str | None = None, prazo: str | None = 
     return {"id": id_, "url": f"https://notion.so/{id_}", "properties": props}
 
 
+def _schema_tarefas():
+    """Schema mínimo que a criação real consulta antes do POST."""
+
+    return {
+        "properties": {
+            "Tarefa": {"type": "title", "title": {}},
+            "Etapa": {"type": "status", "status": {"options": []}},
+            "Prazo": {"type": "date", "date": {}},
+        }
+    }
+
+
 # ---------------------------------------------------------------------------
 # Anotacoes MCP
 # ---------------------------------------------------------------------------
@@ -367,6 +379,12 @@ class TestCreateTask:
     @responses.activate
     def test_cria_tarefa_simples(self):
         responses.add(
+            responses.GET,
+            f"{NOTION_BASE_URL}/databases/{DB}",
+            json=_schema_tarefas(),
+            status=200,
+        )
+        responses.add(
             responses.POST,
             f"{NOTION_BASE_URL}/pages",
             json=_pagina("novo", "Estudar IA", "Inbox"),
@@ -379,6 +397,12 @@ class TestCreateTask:
 
     @responses.activate
     def test_cria_tarefa_com_status_e_prazo(self):
+        responses.add(
+            responses.GET,
+            f"{NOTION_BASE_URL}/databases/{DB}",
+            json=_schema_tarefas(),
+            status=200,
+        )
         responses.add(
             responses.POST,
             f"{NOTION_BASE_URL}/pages",

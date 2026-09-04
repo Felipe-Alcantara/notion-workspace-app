@@ -76,6 +76,10 @@ notion-workspace-app/
 └── LICENSE                      # Licença MIT
 ```
 
+Na distribuição `0.3.0`, `front/` é usado apenas no desenvolvimento: o workflow
+de release compila a SPA para `server/static/frontend/` e o wheel leva esse
+bundle. Assim, a instalação de usuário não precisa de Node/npm.
+
 ---
 
 ## 🚀 Componentes
@@ -108,15 +112,33 @@ Notion.
 
 ## 🎯 Como Usar
 
+### Instalação distribuída
+
+Para usar o ecossistema completo, instale a fachada única:
+
+```bash
+pipx install "notion-automacoes[app]"
+# ou: uv tool install "notion-automacoes[app]"
+notion-automacoes doctor
+notion-automacoes app start
+notion-automacoes mcp start
+```
+
+O release técnico candidato é `0.3.0`; a publicação no PyPI aguarda confirmação
+de nome/ownership/metadados legais. Consulte o guia do hub para a sequência de
+release e o smoke em Windows, macOS e Linux.
+
 ### Início rápido
+
+O fluxo abaixo é o de desenvolvimento pelo checkout:
 
 ```bash
 # Clone o repositório
 git clone https://github.com/Felipe-Alcantara/notion-workspace-app.git
 cd notion-workspace-app
 
-# Instale as dependências Python
-pip install -r requirements.txt
+# Instale as dependências Python de desenvolvimento
+python -m pip install -e ".[dev]"
 
 # Crie a configuração local e preencha os valores necessários
 cp .env.example .env
@@ -125,9 +147,12 @@ cp .env.example .env
 python start_app.py
 ```
 
-O launcher aplica as migrações, sobe Django e Vite e abre o navegador. Pelo menu
+No checkout, o launcher aplica as migrações, sobe Django e Vite e abre o navegador. Pelo menu
 também é possível instalar dependências, configurar o ambiente e conferir o
 status dos componentes.
+
+Quando executado a partir do wheel, o mesmo launcher sobe apenas o Django e
+serve a SPA empacotada; Node/npm não são consultados.
 
 ---
 

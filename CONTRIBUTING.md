@@ -29,7 +29,8 @@ cd notion-workspace-app
 python start_app.py            # menu: instala, configura e sobe tudo
 
 # Gate Python (HTTP mockado — não precisa de token nem rede)
-pip install -r requirements.txt
+python -m pip install -e ".[dev]"
+python -m pip install -r requirements.txt  # alternativa de runtime
 ruff check .
 python -m pytest
 

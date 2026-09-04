@@ -38,6 +38,23 @@ def _pagina(id_, nome, status=None, prazo=None, duracao=None, areas=None):
     return {"id": id_, "url": f"https://notion.so/{id_}", "properties": props}
 
 
+def _schema_tarefas_com_area():
+    """Schema completo o bastante para o fluxo de criação e enriquecimento."""
+
+    return {
+        "properties": {
+            "Tarefa": {"type": "title", "title": {}},
+            "Etapa": {"type": "status", "status": {"options": []}},
+            "Prazo": {"type": "date", "date": {}},
+            "Esforço": {"type": "status", "status": {"options": []}},
+            "Áreas da vida": {
+                "type": "relation",
+                "relation": {"database_id": "db_areas"},
+            },
+        }
+    }
+
+
 @responses.activate
 def test_listar_tarefas_delega_para_tasklist():
     responses.add(
@@ -98,14 +115,7 @@ def test_criar_tarefa_devolve_tarefa_criada():
     responses.add(
         responses.GET,
         f"{NOTION_BASE_URL}/databases/{DB}",
-        json={
-            "properties": {
-                "Áreas da vida": {
-                    "type": "relation",
-                    "relation": {"database_id": "db_areas"},
-                }
-            }
-        },
+        json=_schema_tarefas_com_area(),
         status=200,
     )
     responses.add(

@@ -1,11 +1,62 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "notion-workspace-app"
-version = "0.1.0"
+version = "0.3.0"
 description = "Aplicação local para operar o Notion: API Django, SPA React, servidor MCP e launcher TUI (start_app.py)."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
 authors = [{ name = "Felipe Alcantara" }]
+dependencies = [
+    "notion-starter>=0.3.0,<0.4.0",
+    "Django>=5.0",
+    "requests>=2.25",
+    "questionary>=2.0",
+    "rich>=13.0",
+    "mcp>=1.28,<2",
+]
+
+[project.optional-dependencies]
+server = [
+    "Django>=5.0",
+]
+mcp = [
+    "mcp>=1.28,<2",
+]
+dev = [
+    "pytest>=7.0",
+    "responses>=0.23",
+    "ruff>=0.4",
+]
+
+[project.scripts]
+notion-automacoes-app = "start_app:main"
+notion-automacoes-mcp = "server.mcp_server:main"
+
+[project.urls]
+Homepage = "https://github.com/Felipe-Alcantara/notion-workspace-app"
+Repository = "https://github.com/Felipe-Alcantara/notion-workspace-app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["server"]
+include = ["start_app.py"]
+artifacts = ["server/static/frontend/**"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"start_app.py" = "start_app.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "server",
+    "start_app.py",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
+]
+artifacts = ["server/static/frontend/**"]
 
 [tool.ruff]
 line-length = 100

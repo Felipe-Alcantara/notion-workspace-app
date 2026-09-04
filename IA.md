@@ -14,16 +14,16 @@
 
 ## 📊 ESTADO ATUAL (RESUMO VIVO)
 
-Última atualização: [2026-07-18]
+Última atualização: [2026-09-04]
 
-- Fase: produto local funcional com launcher, API Django, SPA React e servidor
-  MCP sobre o `notion-starter`.
+- Fase: produto local funcional e preparado para distribuição como extra `app` da
+  CLI única, com launcher, API Django, SPA React empacotada e servidor MCP.
 - Qualidade: 256 testes verdes, 2 skips esperados, `ruff` e `oxlint` limpos e
   build Vite aprovado; CI cobre Python 3.10–3.13 e o frontend em Node 22.
 - Documentação: README alinhado ao Felixo System Design e contrato de qualidade
   centralizado em `QUALIDADE.md`.
-- Próximos passos abertos: escrita genérica na exploração, novas visualizações e
-  empacotamento do launcher.
+- Próximos passos abertos: confirmação do contrato de publicação no PyPI, escrita
+  genérica na exploração e novas visualizações.
 - Risco conhecido: dependências Python usam limites mínimos e são monitoradas
   pela matriz de CI; o frontend possui lockfile.
 
@@ -56,15 +56,16 @@ servidor MCP com as ferramentas `notion.*` (`server/mcp_server.py`) e o launcher
 
 ## 🛠️ STACK & DEPENDÊNCIAS
 
-- Python 3.10+; `requirements.txt`: `notion-starter` (git), `django>=5.0`,
-  `questionary`/`rich` (TUI), `mcp>=1.28,<2`, e dev `pytest`/`responses`/`ruff`.
+- Python 3.10+; `pyproject.toml`: `notion-starter>=0.3.0,<0.4.0`, Django,
+  `questionary`/`rich` (TUI), `mcp>=1.28,<2`; ferramentas de desenvolvimento no
+  extra `dev`.
 - Front: Vite + React 18 + Tailwind; lint com `oxlint`; Node 22+.
 
 ---
 
 ## 🧪 TESTES & GATE
 
-- Gate Python: `ruff check .` + `python -m pytest` (272 testes em 2026-07-08, sem rede).
+- Gate Python: `ruff check .` + `python -m pytest` (**256 testes verdes, 2 skips**, sem rede).
 - Gate front: `npm run lint` + `npm run build` em `front/`.
 - CI: GitHub Actions (`.github/workflows/ci.yml`) com jobs Python (3.10–3.13) e front.
 
@@ -129,3 +130,27 @@ servidor MCP com as ferramentas `notion.*` (`server/mcp_server.py`) e o launcher
 
 Ideias abertas à contribuição: escrita genérica na aba Explorar, mais
 visualizações no kanban, empacotamento do launcher para distribuição.
+
+## [2026-09-04] App empacotado com SPA e entry points públicos
+
+O `pyproject.toml` passou a ser um pacote Hatchling `0.3.0`, com os módulos
+Django/MCP, `start_app.py` e os entry points `notion-automacoes-app` e
+`notion-automacoes-mcp`. O workflow de release executa `npm ci` e `npm run build`
+na SPA, inclui `server/static/frontend/` no wheel/sdist e valida os artefatos
+antes do smoke multiplataforma.
+
+O launcher detecta quando está instalado no wheel: nessa situação serve o
+`index.html` compilado pela rota Django e não tenta resolver Node/npm; no
+checkout, o fluxo Vite de desenvolvimento permanece intacto. A rota de build
+foi corrigida para gerar referências em `/static/frontend/`, compatíveis com o
+servidor Django.
+
+Também foram ajustados os fixtures dos testes que usam `TaskList`: eles agora
+mockam a leitura de schema introduzida pela criação genérica de linhas, em vez de
+mascarar uma chamada HTTP ausente.
+
+**Validação:** `ruff check .` limpo, **256 testes verdes e 2 skips**, `npm run lint`
+e `npm run build` aprovados, `twine check` aprovado e smoke do wheel limpo
+confirmando `start_app`, a rota `/` com o bundle e os dois entry points. O smoke
+real da matriz Windows/macOS ainda depende da execução do workflow no GitHub;
+publicação e Trusted Publishing não foram executados.

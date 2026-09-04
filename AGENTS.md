@@ -17,7 +17,9 @@ front/src/              → SPA React (Vite): kanban, filtros, exploração do w
 ```
 
 - `api` e `mcp_server` não têm regra de negócio; `services` não conhece HTTP de borda.
-- A base Notion vem da lib [notion-starter](https://github.com/Felipe-Alcantara/notion-starter) (via `requirements.txt`).
+- A base Notion vem da lib [notion-starter](https://github.com/Felipe-Alcantara/notion-starter),
+  declarada por faixa de versão no `pyproject.toml` (e espelhada em
+  `requirements.txt` para desenvolvimento).
 
 ## Camada compartilhada
 
@@ -28,10 +30,14 @@ são shims para `notion-starter`. Bugfix de regra compartilhada deve ser feito e
 ## Testar
 
 ```bash
+python -m pip install -e ".[dev]"
+python -m ruff check .
 python -m pytest        # front: cd front && npm test / npx oxlint
 ```
 
-Falhas pré-existentes conhecidas no Windows: 2 em `test_start_app`, 1 em `test_services_ingestao` — não são regressão sua.
+O build de distribuição também precisa executar `cd front && npm run lint && npm run build`;
+o workflow de release coloca o bundle compilado dentro do wheel, para que o usuário
+final não precise de Node/npm.
 
 ## Convenções
 
