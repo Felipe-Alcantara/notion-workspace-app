@@ -179,7 +179,7 @@ O novo commit passou na matriz oficial: **279 testes** em Python 3.10, 3.11,
 3.12 e 3.13, além de lint/build da SPA. O fixture agora cobre o contrato real do
 starter publicado e não depende da ordem incidental das chamadas mockadas.
 
-## 2026-09-26 — 0.3.1: aceita o notion-starter 0.4
+## [2026-09-26] 0.3.1 aceita o notion-starter 0.4
 
 O notion-starter 0.4.0 foi publicado com correções de perda de dados na manipulação de blocos. A CLI
 `notion-automacoes` 0.5.0 passou a exigir essa versão. O app fixava `notion-starter<0.4.0`, então um
