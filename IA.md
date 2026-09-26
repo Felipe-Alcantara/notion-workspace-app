@@ -178,3 +178,14 @@ reexecutada no novo commit.
 O novo commit passou na matriz oficial: **279 testes** em Python 3.10, 3.11,
 3.12 e 3.13, além de lint/build da SPA. O fixture agora cobre o contrato real do
 starter publicado e não depende da ordem incidental das chamadas mockadas.
+
+## 2026-09-26 — 0.3.1: aceita o notion-starter 0.4
+
+O notion-starter 0.4.0 foi publicado com correções de perda de dados na manipulação de blocos. A CLI
+`notion-automacoes` 0.5.0 passou a exigir essa versão. O app fixava `notion-starter<0.4.0`, então um
+`pip install "notion-automacoes[app]"` voltava em silêncio para a CLI 0.4.1. A 0.3.1 só amplia a faixa
+para `>=0.3.0,<0.5.0` (pyproject e requirements), sem mudar funcionalidade. A suíte inteira (256 passaram,
+2 ignorados) e o `ruff` passaram contra o código do starter 0.4.0. O extra `app` da CLI 0.5.0
+(`notion-workspace-app>=0.3.0,<0.4.0`) aceita a 0.3.1, então não foi preciso republicar a CLI.
+Pendência conhecida: o MCP (`edit_block`/`append_content` em `server/mcp_server.py`) ainda faz `strip`
+do Markdown, o mesmo defeito que a CLI corrigiu (recuo inicial de bloco de código perdido).

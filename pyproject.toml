@@ -4,14 +4,14 @@ build-backend = "hatchling.build"
 
 [project]
 name = "notion-workspace-app"
-version = "0.3.0"
+version = "0.3.1"
 description = "Aplicação local para operar o Notion: API Django, SPA React, servidor MCP e launcher TUI (start_app.py)."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
 authors = [{ name = "Felipe Alcantara" }]
 dependencies = [
-    "notion-starter>=0.3.0,<0.4.0",
+    "notion-starter>=0.3.0,<0.5.0",
     "Django>=5.0",
     "requests>=2.25",
     "questionary>=2.0",
